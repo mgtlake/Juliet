@@ -1,5 +1,5 @@
 module Juliet
 
-# package code goes here
+include("types.jl")
 
 end # module
