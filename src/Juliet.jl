@@ -31,6 +31,12 @@ function complete_lesson(lesson::Types.Lesson)
 		if isa(question, Types.InfoQuestion)
 			print("...")
 			readline()
+		elseif isa(question, Types.SyntaxQuestion)
+			while (print("> "); parse(readline()) != question.answer) end
+		elseif isa(question, Types.FunctionQuestion)
+			while (print("> "); !(question.test)(readline())) end
+		elseif isa(question, Types.FunctionQuestion)
+			while (print("> "); int(readline() != question.answer) end
 		end
 	end
 end
