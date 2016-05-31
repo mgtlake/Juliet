@@ -1,6 +1,7 @@
 module Juliet
 
 using JLD
+using Atom
 
 include("types.jl")
 
@@ -21,6 +22,17 @@ function package_course(course::Types.Course, filename)
 	save(filename, "course: $(lesson.name)", course)
 end
 
+function complete_lesson(lesson::Types.Lesson)
+	len = length(lesson.questions)
+	@progress for (i, question) in enumerate(lesson.questions)
+		print("$(rpad(i, length(string(len)))) / $len: ")
+		println(question.text)
+
+		if isa(question, Types.InfoQuestion)
+			print("...")
+			readline()
+		end
+	end
 end
 
 end # module
