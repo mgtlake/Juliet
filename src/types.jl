@@ -13,23 +13,23 @@ type Lesson
 	questions::Array{AbstractQuestion, 1}
 end
 
-type InfoQuestion <: AbstractQuestion
+immutable InfoQuestion <: AbstractQuestion
 	text::AbstractString
 end
 
-type SyntaxQuestion <: AbstractQuestion
+immutable SyntaxQuestion <: AbstractQuestion
 	text::AbstractString
 	hints::Array{AbstractString, 1}
 	answer::Expr
 end
 
-type FunctionQuestion <: AbstractQuestion
+immutable FunctionQuestion <: AbstractQuestion
 	text::AbstractString
 	hints::Array{AbstractString, 1}
 	tests::Function
 end
 
-type MultiQuestion <: AbstractQuestion
+immutable MultiQuestion <: AbstractQuestion
 	text::AbstractString
 	hints::Array{AbstractString, 1}
 	options::Array{AbstractString, 1}
