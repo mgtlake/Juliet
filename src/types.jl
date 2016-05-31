@@ -26,7 +26,7 @@ end
 immutable FunctionQuestion <: AbstractQuestion
 	text::AbstractString
 	hints::Array{AbstractString, 1}
-	tests::Function
+	test::Function
 end
 
 immutable MultiQuestion <: AbstractQuestion
