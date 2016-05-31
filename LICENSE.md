@@ -1,4 +1,4 @@
-The Juliet.jl package is licensed under the MIT "Expat" License:
+The Juliet package is licensed under the MIT "Expat" License:
 
 > Copyright (c) 2016: Matthew Lake.
 >
