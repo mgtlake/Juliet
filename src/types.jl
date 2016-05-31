@@ -36,4 +36,13 @@ immutable MultiQuestion <: AbstractQuestion
 	answer::Int
 end
 
+type Course
+	name::AbstractString
+	description::AbstractString
+	version::VersionNumber
+	authors::Array{AbstractString, 1}
+	keywords::Array{AbstractString, 1}
+	lessons::Array{Lesson, 1}
+end
+
 end  # module
