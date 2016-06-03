@@ -28,17 +28,31 @@ function complete_lesson(lesson::Types.Lesson)
 		print("$(rpad(i, length(string(len)))) / $len: ")
 		println(question.text)
 
+		currHint = 0
 		if isa(question, Types.InfoQuestion)
 			print("...")
 			readline()
 		elseif isa(question, Types.SyntaxQuestion)
-			while (print("> "); parse(readline()) != question.answer) end
+			while (print("> "); parse(readline()) != question.answer)
+				currHint = show_next_hint(currHint, question.hints)
+			end
 		elseif isa(question, Types.FunctionQuestion)
-			while (print("> "); !(question.test)(readline())) end
+			while (print("> "); !(question.test)(readline()))
+				currHint = show_next_hint(currHint, question.hints)
+			end
 		elseif isa(question, Types.FunctionQuestion)
-			while (print("> "); int(readline() != question.answer) end
+			while (print("> "); int(readline()) != question.answer)
+				currHint = show_next_hint(currHint, question.hints)
+			end
 		end
 	end
+end
+
+function show_next_hint(index::Int, hints::Array{AbstractString, 1})
+	if length(hints) <= 0 return end
+	index = index % length(hints) + 1
+	println(hints[index])
+	return index
 end
 
 end # module
