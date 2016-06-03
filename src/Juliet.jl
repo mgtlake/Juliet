@@ -5,6 +5,16 @@ using Atom
 
 include("types.jl")
 
+export juliet
+
+function juliet()
+	println("""
+	Welcome to Juliet, the Julia Interative Educational Tutor.
+	Selct a lesson or course to get started, or type `!help` for information.
+	""")
+	list_courses_and_lessons()
+end
+
 function new_lesson(name; description="", version=v"1", authors=[],
 	keywords=[], questions=[])
 	return Types.Lesson(name, description, version, authors, keywords, questions)
@@ -59,6 +69,19 @@ function show_next_hint(index::Int, hints::Array{AbstractString, 1})
 	index = index % length(hints) + 1
 	println(hints[index])
 	return index
+end
+
+function list_courses_and_lessons()
+	storeDir = "$(Pkg.dir("Juliet"))/store"
+	if !isdir(storeDir)
+		mkdir(storeDir)
+	end
+
+	for object in readdir(storeDir)
+		if isfile(object) && split(object, ".")[end] == "julietlesson"
+
+		end
+	end
 end
 
 end # module
