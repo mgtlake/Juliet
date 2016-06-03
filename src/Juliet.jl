@@ -82,6 +82,7 @@ end
 function visit_folder(folder)
 	filenames = Array{AbstractString, 1}()
 	for object in readdir(folder)
+		object = folder * object
 		if isfile(object) && split(object, ".")[end] == "julietlesson"
 			push!(filenames, object)
 		elseif isdir(object)
