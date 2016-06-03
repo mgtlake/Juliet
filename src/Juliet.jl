@@ -72,16 +72,25 @@ function show_next_hint(index::Int, hints::Array{AbstractString, 1})
 end
 
 function list_courses_and_lessons()
-	storeDir = "$(Pkg.dir("Juliet"))/store"
+	storeDir = "$(Pkg.dir("Juliet"))/"
 	if !isdir(storeDir)
 		mkdir(storeDir)
 	end
+	@show visit_folder(storeDir)
+end
 
-	for object in readdir(storeDir)
-		if isfile(object) && split(object, ".")[end] == "julietlesson"
-
+function visit_folder(folder)
+	filenames = Array{AbstractString, 1}()
+	for object in readdir(folder)
+		@show object
+		@show isfile(object)
+		if isfile(object) && split(object, ".")[end] == "jl"#"julietlesson"
+			push!(filenames, folder * object)
+		elseif isdir(object)
+			append!(filenames, visit_folder(object))
 		end
 	end
+	return filenames
 end
 
 end # module
