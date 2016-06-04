@@ -1,11 +1,20 @@
 module Juliet
 
 using JLD
-using Atom
 
 include("types.jl")
 
 export juliet
+
+print("hello world")
+
+macro tryprogress(ex)
+	if isdefined(Main, :Atom)
+		return :(:(@progess) $ex)
+	else
+		return ex
+	end
+end
 
 function juliet()
 	println("""
@@ -35,6 +44,7 @@ end
 function complete_lesson(lesson::Types.Lesson)
 	len = length(lesson.questions)
 	@progress for (i, question) in enumerate(lesson.questions)
+	@tryprogress for (i, question) in enumerate(lesson.questions)
 		print("$(rpad(i, length(string(len)))) / $len: ")
 		println(question.text)
 
