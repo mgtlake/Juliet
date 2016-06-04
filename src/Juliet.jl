@@ -68,7 +68,7 @@ function complete_lesson(lesson::Types.Lesson)
 end
 
 function check_question(test::Function)
-	getInput = isdefined(Main, :Atom) ? Atom.input : readline
+	getInput = isdefined(Main, :Atom) ? Main.Atom.input : readline
 	return test(getInput())
 end
 
