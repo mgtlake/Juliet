@@ -10,7 +10,7 @@ print("hello world")
 
 macro tryprogress(ex)
 	if isdefined(Main, :Atom)
-		return :(:(@progess) $ex)
+		return :(:(@progess)($ex))
 	else
 		return ex
 	end
