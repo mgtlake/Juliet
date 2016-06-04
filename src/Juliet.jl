@@ -78,7 +78,8 @@ function show_next_hint(index::Int, hints::Array{AbstractString, 1})
 		"Almost there - Keep trying!",
 		"One more try",
 		"Hang in there",
-		"Missed it by that much"]))
+		"Missed it by that much",
+		"Close, but no cigar"]))
 	if length(hints) <= 0 return end
 	index = index % length(hints) + 1
 	println(hints[index])
