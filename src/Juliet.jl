@@ -61,6 +61,7 @@ function complete_lesson(lesson::Types.Lesson)
 			end
 		elseif isa(question, Types.FunctionQuestion)
 			while (print("> "); check_question(x -> int(x) != question.answer))
+		elseif isa(question, Types.MultiQuestion)
 				currHint = show_next_hint(currHint, question.hints)
 			end
 		end
