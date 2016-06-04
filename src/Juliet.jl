@@ -52,19 +52,24 @@ function complete_lesson(lesson::Types.Lesson)
 			print("...")
 			readline()
 		elseif isa(question, Types.SyntaxQuestion)
-			while (print("> "); parse(readline()) != question.answer)
+			while (print("> "); check_question(x -> parse(x) != question.answer))
 				currHint = show_next_hint(currHint, question.hints)
 			end
 		elseif isa(question, Types.FunctionQuestion)
-			while (print("> "); !(question.test)(readline()))
+			while (print("> "); check_question(x -> !(question.test)(x)))
 				currHint = show_next_hint(currHint, question.hints)
 			end
 		elseif isa(question, Types.FunctionQuestion)
-			while (print("> "); int(readline()) != question.answer)
+			while (print("> "); check_question(x -> int(x) != question.answer))
 				currHint = show_next_hint(currHint, question.hints)
 			end
 		end
 	end
+end
+
+function check_question(test::Function)
+	getInput = isdefined(Main, :Atom) ? Atom.input : readline
+	return test(getInput())
 end
 
 function show_next_hint(index::Int, hints::Array{AbstractString, 1})
