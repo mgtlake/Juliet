@@ -50,18 +50,17 @@ function complete_lesson(lesson::Types.Lesson)
 		currHint = 0
 		if isa(question, Types.InfoQuestion)
 			print("...")
-			readline()
+			check_question(x -> true)
 		elseif isa(question, Types.SyntaxQuestion)
-			while (print("> "); check_question(x -> parse(x) != question.answer))
+			while (check_question(x -> parse(x) != question.answer))
 				currHint = show_next_hint(currHint, question.hints)
 			end
 		elseif isa(question, Types.FunctionQuestion)
-			while (print("> "); check_question(x -> !(question.test)(x)))
+			while (check_question(x -> !(question.test)(x)))
 				currHint = show_next_hint(currHint, question.hints)
 			end
-		elseif isa(question, Types.FunctionQuestion)
-			while (print("> "); check_question(x -> int(x) != question.answer))
 		elseif isa(question, Types.MultiQuestion)
+			while (check_question(x -> int(x) != question.answer))
 				currHint = show_next_hint(currHint, question.hints)
 			end
 		end
