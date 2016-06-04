@@ -19,8 +19,7 @@ end
 function juliet()
 	println("""
 	Welcome to Juliet, the Julia Interative Educational Tutor.
-	Selct a lesson or course to get started, or type `!help` for information.
-	""")
+	Selct a lesson or course to get started, or type `!help` for information.""")
 	list_courses_and_lessons()
 end
 
