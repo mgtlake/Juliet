@@ -6,7 +6,9 @@ include("types.jl")
 
 export juliet
 
-print("hello world")
+println("""
+	Welcome to Juliet, the Julia Interative Educational Tutor.
+	Type `juliet()` to get started""")
 
 macro tryprogress(ex)
 	if isdefined(Main, :Atom)
@@ -16,11 +18,29 @@ macro tryprogress(ex)
 	end
 end
 
+macro getInput()
+	if isdefined(Main, :Atom)
+		return :(Main.Atom.input())
+	else
+		return  :(print("> "); readline())
+	end
+end
+
+storeDir = "$(Pkg.dir("Juliet"))/store"
+
 function juliet()
 	println("""
 	Welcome to Juliet, the Julia Interative Educational Tutor.
 	Selct a lesson or course to get started, or type `!help` for information.""")
-	list_courses_and_lessons()
+	lessons = list_courses_and_lessons()
+	if length(lessons) == 0
+		println("No lessons installed - exiting Juliet")
+		return
+	end
+	while check_question(x -> !isa(parse(x), Number) ||
+			!(0 < parse(Int,x) < length(lessons)))
+		println("Invalid selection")
+	end
 end
 
 function new_lesson(name; description="", version=v"1", authors=[],
@@ -32,12 +52,24 @@ function add_question!(lesson::Types.Lesson, question::Types.AbstractQuestion)
 	push!(lesson.questions, question)
 end
 
+function load_lesson(filename)
+	return JLD.load(filename)[1]
+end
+
+function package_lesson(lesson::Types.Lesson)
+	JLD.save("$storeDir/lessons/$(lesson.name).jld", lesson.name, lesson)
+end
+
 function package_lesson(lesson::Types.Lesson, filename)
-	save(filename, "lesson: $(lesson.name)", lesson)
+	JLD.save(filename, lesson.name, lesson)
+end
+
+function package_course(course::Types.Course)
+	JLD.save("$storeDir/courses/$(course.name).jld", course.name, course)
 end
 
 function package_course(course::Types.Course, filename)
-	save(filename, "course: $(lesson.name)", course)
+	JLD.save(filename, course.name, course)
 end
 
 function complete_lesson(lesson::Types.Lesson)
@@ -63,12 +95,12 @@ function complete_lesson(lesson::Types.Lesson)
 				currHint = show_next_hint(currHint, question.hints)
 			end
 		end
+		show_congrats()
 	end
 end
 
 function check_question(test::Function)
-	getInput = isdefined(Main, :Atom) ? Main.Atom.input : readline
-	return test(getInput())
+	return test(@getInput)
 end
 
 function show_next_hint(index::Int, hints::Array{AbstractString, 1})
@@ -85,19 +117,27 @@ function show_next_hint(index::Int, hints::Array{AbstractString, 1})
 	return index
 end
 
+function show_congrats()
+	println(rand([
+		"You got it right!",
+		"Great job!",
+		"Keep up the great work!",
+		"You're doing great!"]))
+end
+
 function list_courses_and_lessons()
-	storeDir = "$(Pkg.dir("Juliet"))/store"
 	if !isdir(storeDir)
 		mkdir(storeDir)
 	end
-	@show visit_folder(storeDir)
+	lessons = visit_folder(storeDir)
+	return lessons
 end
 
 function visit_folder(folder)
 	filenames = Array{AbstractString, 1}()
 	for object in readdir(folder)
 		object = folder * object
-		if isfile(object) && split(object, ".")[end] == "julietlesson"
+		if isfile(object) && ismatch(r".*\.julietlesson", object)
 			push!(filenames, object)
 		elseif isdir(object)
 			append!(filenames, visit_folder(object * "/"))
