@@ -11,6 +11,9 @@ println("""
 	Welcome to Juliet, the Julia Interative Educational Tutor.
 	Type `juliet()` to get started""")
 
+"""
+Try to use a progess bar - relies on `Atom.jl`
+"""
 macro tryprogress(ex)
 	if isdefined(Main, :Atom)
 		return :(Main.Atom.@progress $ex)
@@ -19,6 +22,9 @@ macro tryprogress(ex)
 	end
 end
 
+"""
+Get user input in a environment agnostic manner
+"""
 macro getInput()
 	if isdefined(Main, :Atom)
 		return :(Main.Atom.input())
@@ -29,6 +35,9 @@ end
 
 storeDir = "$(Pkg.dir("Juliet"))/store"
 
+"""
+Main function to run Juliet
+"""
 function juliet()
 	println("""
 	Welcome to Juliet, the Julia Interative Educational Tutor.
@@ -36,6 +45,9 @@ function juliet()
 	choose_lesson()
 end
 
+"""
+Choose a lesson and complete it
+"""
 function choose_lesson()
 	lessons, courses = get_lessons(), get_courses()
 	total = union(lessons, courses)
@@ -71,39 +83,66 @@ function choose_lesson()
 	end
 end
 
+"""
+Remove the store location from a filename
+"""
 function remove_location(filename)
 	return replace(filename, storeDir, "")
 end
 
+"""
+Create a new lesson
+"""
 function new_lesson(name; description="", version=v"1", authors=[],
 	keywords=[], questions=[])
 	return Types.Lesson(name, description, version, authors, keywords, questions)
 end
 
+"""
+Add a question to a lesson
+"""
 function add_question!(lesson::Types.Lesson, question::Types.AbstractQuestion)
 	push!(lesson.questions, question)
 end
 
+"""
+Load a lesson from a JLD file
+"""
 function load_lesson(filename)
 	return last(first(JLD.load(filename)))
 end
 
+"""
+Package a lesson into the default location
+"""
 function package_lesson(lesson::Types.Lesson)
 	package_lesson(lesson, "$storeDir/lessons/$(lesson.name).julietlesson")
 end
 
+"""
+Package a lesson into a custom location
+"""
 function package_lesson(lesson::Types.Lesson, filename)
 	JLD.save(File(DataFormat{:JLD}, filename), lesson.name, lesson)
 end
 
+"""
+Package a course into the default location
+"""
 function package_course(course::Types.Course)
 	package_course(course, "$storeDir/courses/$(course.name).julietcourse")
 end
 
+"""
+Package a course into a custom location
+"""
 function package_course(course::Types.Course, filename)
 	JLD.save(File(DataFormat{:JLD}, filename), course.name, course)
 end
 
+"""
+Go through a lesson's questions
+"""
 function complete_lesson(lesson::Types.Lesson)
 	len = length(lesson.questions)
 	@tryprogress for (i, question) in enumerate(lesson.questions)
@@ -131,10 +170,16 @@ function complete_lesson(lesson::Types.Lesson)
 	end
 end
 
+"""
+Check that the user's input satisfy the question's test
+"""
 function check_question(test::Function)
 	return test(@getInput)
 end
 
+"""
+Show an encouraging message and a hint
+"""
 function show_next_hint(index::Int, hints::Array{AbstractString, 1})
 	println(rand([
 		"Oops - that's not quite right",
@@ -149,6 +194,9 @@ function show_next_hint(index::Int, hints::Array{AbstractString, 1})
 	return index
 end
 
+"""
+Show a congratulatory message
+"""
 function show_congrats()
 	println(rand([
 		"You got it right!",
@@ -157,6 +205,9 @@ function show_congrats()
 		"You're doing great!"]))
 end
 
+"""
+Get course files from the default location
+"""
 function get_courses()
 	courseDir = "$storeDir/courses"
 	if !isdir(courseDir)
@@ -166,6 +217,9 @@ function get_courses()
 	return courses
 end
 
+"""
+Get lesson files from the default location
+"""
 function get_lessons()
 	lessonDir = "$storeDir/lessons"
 	if !isdir(lessonDir)
@@ -175,6 +229,9 @@ function get_lessons()
 	return lessons
 end
 
+"""
+Check for lessons and courses in a folder - acts recursively
+"""
 function visit_folder(folder)
 	filenames = Array{AbstractString, 1}()
 	for object in readdir(folder)
