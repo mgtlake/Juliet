@@ -1,6 +1,7 @@
 module Juliet
 
 using JLD
+using FileIO
 
 include("types.jl")
 
@@ -22,7 +23,7 @@ macro getInput()
 	if isdefined(Main, :Atom)
 		return :(Main.Atom.input())
 	else
-		return  :(print("> "); readline())
+		return :(print("> "); readline())
 	end
 end
 
@@ -32,15 +33,46 @@ function juliet()
 	println("""
 	Welcome to Juliet, the Julia Interative Educational Tutor.
 	Selct a lesson or course to get started, or type `!help` for information.""")
-	lessons = list_courses_and_lessons()
-	if length(lessons) == 0
-		println("No lessons installed - exiting Juliet")
+	choose_lesson()
+end
+
+function choose_lesson()
+	lessons, courses = get_lessons(), get_courses()
+	total = union(lessons, courses)
+	if length(total) == 0
+		println("No lessons or courses installed - exiting Juliet")
 		return
 	end
-	while check_question(x -> !isa(parse(x), Number) ||
-			!(0 < parse(Int,x) < length(lessons)))
+
+	if length(courses) > 0
+		println("Courses:")
+		for (i, course) in enumerate(map(remove_location, courses))
+			println("$(rpad(i, length(string(length(courses))))) - $course")
+		end
+	end
+	if length(lessons) > 0
+		println("Lessons:")
+		for (i, lesson) in enumerate(map(remove_location, lessons))
+			println("$(rpad(i + length(courses), length(string(length(lessons))))) - $lesson")
+		end
+	end
+
+	input = AbstractString{}
+	while (input = @getInput;
+			!isa(parse(input), Number) ||
+			!(0 < parse(Int, input) <= length(total)))
 		println("Invalid selection")
 	end
+	selection = total[parse(Int, input)]
+	if in(selection, lessons)
+		complete_lesson(load_lesson(selection))
+	else
+
+	end
+end
+
+function remove_location(filename)
+	return replace(filename, storeDir, "")
 end
 
 function new_lesson(name; description="", version=v"1", authors=[],
@@ -53,23 +85,23 @@ function add_question!(lesson::Types.Lesson, question::Types.AbstractQuestion)
 end
 
 function load_lesson(filename)
-	return JLD.load(filename)[1]
+	return last(first(JLD.load(filename)))
 end
 
 function package_lesson(lesson::Types.Lesson)
-	JLD.save("$storeDir/lessons/$(lesson.name).jld", lesson.name, lesson)
+	package_lesson(lesson, "$storeDir/lessons/$(lesson.name).julietlesson")
 end
 
 function package_lesson(lesson::Types.Lesson, filename)
-	JLD.save(filename, lesson.name, lesson)
+	JLD.save(File(DataFormat{:JLD}, filename), lesson.name, lesson)
 end
 
 function package_course(course::Types.Course)
-	JLD.save("$storeDir/courses/$(course.name).jld", course.name, course)
+	package_course(course, "$storeDir/courses/$(course.name).julietcourse")
 end
 
 function package_course(course::Types.Course, filename)
-	JLD.save(filename, course.name, course)
+	JLD.save(File(DataFormat{:JLD}, filename), course.name, course)
 end
 
 function complete_lesson(lesson::Types.Lesson)
@@ -125,18 +157,28 @@ function show_congrats()
 		"You're doing great!"]))
 end
 
-function list_courses_and_lessons()
-	if !isdir(storeDir)
-		mkdir(storeDir)
+function get_courses()
+	courseDir = "$storeDir/courses"
+	if !isdir(courseDir)
+		mkdir(courseDir)
 	end
-	lessons = visit_folder(storeDir)
+	courses = visit_folder(courseDir)
+	return courses
+end
+
+function get_lessons()
+	lessonDir = "$storeDir/lessons"
+	if !isdir(lessonDir)
+		mkdir(lessonDir)
+	end
+	lessons = visit_folder(lessonDir)
 	return lessons
 end
 
 function visit_folder(folder)
 	filenames = Array{AbstractString, 1}()
 	for object in readdir(folder)
-		object = folder * object
+		object = "$folder/$object"
 		if isfile(object) && ismatch(r".*\.julietlesson", object)
 			push!(filenames, object)
 		elseif isdir(object)

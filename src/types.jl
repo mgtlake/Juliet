@@ -26,6 +26,8 @@ end
 immutable FunctionQuestion <: AbstractQuestion
 	text::AbstractString
 	hints::Array{AbstractString, 1}
+	# N.B. Because of JLD restrictions `test` needs to be an anonymous
+	# (non-generic) function
 	test::Function
 end
 
