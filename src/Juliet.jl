@@ -9,7 +9,8 @@ export juliet
 
 println("""
 	Welcome to Juliet, the Julia Interative Educational Tutor.
-	Type `juliet()` to get started""")
+	Type `juliet()` to get started
+	""")
 
 """
 Try to use a progess bar - relies on `Atom.jl`
@@ -41,14 +42,15 @@ Main function to run Juliet
 function juliet()
 	println("""
 	Welcome to Juliet, the Julia Interative Educational Tutor.
-	Selct a lesson or course to get started, or type `!help` for information.""")
-	choose_lesson(get_lessons(), get_courses())
+	Selct a lesson or course to get started, or type `!help` for information.
+	""")
+	choose_lesson(get_packaged(Types.Lesson), get_packaged(Types.Course))
 end
 
 """
 Choose a lesson and complete it
 """
-function choose_lesson(lessons, courses)
+function choose_lesson(lessons, courses; currCourse=nothing)
 	total = [courses; lessons]
 	if length(total) == 0
 		println("No lessons or courses installed - exiting Juliet")
@@ -57,14 +59,17 @@ function choose_lesson(lessons, courses)
 
 	if length(courses) > 0
 		println("Courses:")
-		for (i, course) in enumerate(map(remove_location, courses))
-			println(rpad(i, length(string(length(courses)))), " - ", course)
+		for (i, course) in enumerate(courses)
+			println(rpad(i, length(string(length(courses)))), " - ",
+				course.name)
 		end
 	end
 	if length(lessons) > 0
-		println("Lessons:")
-		for (i, lesson) in enumerate(map(remove_location, lessons))
-			println(rpad(i + length(courses), length(string(length(lessons)))), " - ", lesson)
+		println("Lessons", isa(currCourse, Void) ? ":" :
+			" in $(currCourse.name) (type `!back` to return to the total list):")
+		for (i, lesson) in enumerate(lessons)
+			println(rpad(i + length(courses), length(string(length(lessons)))),
+				" - ", lesson.name)
 		end
 	end
 
@@ -72,25 +77,31 @@ function choose_lesson(lessons, courses)
 	while (input = @getInput;
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(total)))
+		if strip(input) == "!back" break end
 		println("Invalid selection")
+	end
+	println()
+
+	if strip(input) == "!back"
+		choose_lesson(get_packaged(Types.Lesson), get_packaged(Types.Course))
+		return
 	end
 	selection = total[parse(Int, input)]
 	if in(selection, lessons)
-		complete_lesson(load_packaged(selection))
+		complete_lesson(selection)
+		if isa(currCourse, Void) && selection != last(total)
+			println("Continue to next lesson in course? y/n")
+			while (input = strip(lowercase(@getInput));
+					!(input in ["yes", "y", "no", "n"]))
+				println("Invalid selection")
+			end
+			if input in ["yes", "y"]
+				complete_lesson(total[getindex(total, selection) + 1])
+			else return end
+		end
 	else
-		@show load_packaged(selection)
-		choose_lesson(load_packaged(selection).lessons, [])
+		choose_lesson(selection.lessons, []; currCourse=selection)
 	end
-end
-
-"""
-Remove the store location from a filename
-"""
-function remove_location(filename)
-	if !isa(filename, AbstractString)
-		return filename
-	end
-	return replace(filename, storeDir, "")
 end
 
 """
@@ -162,6 +173,7 @@ end
 Go through a lesson's questions
 """
 function complete_lesson(lesson::Types.Lesson)
+	println("Starting ", lesson.name)
 	len = length(lesson.questions)
 	@tryprogress for (i, question) in enumerate(lesson.questions)
 		print("$(rpad(i, length(string(len)))) / $len: ")
@@ -186,6 +198,7 @@ function complete_lesson(lesson::Types.Lesson)
 		end
 		show_congrats()
 	end
+	println("Finished ", lesson.name)
 end
 
 """
@@ -224,27 +237,14 @@ function show_congrats()
 end
 
 """
-Get course files from the default location
+Get packaged lessons or courses
 """
-function get_courses()
-	courseDir = "$storeDir/courses"
-	if !isdir(courseDir)
-		mkdir(courseDir)
+function get_packaged(filterType)
+	if !isdir(storeDir)
+		mkdir(storeDir)
 	end
-	courses = visit_folder(courseDir)
-	return courses
-end
-
-"""
-Get lesson files from the default location
-"""
-function get_lessons()
-	lessonDir = "$storeDir/lessons"
-	if !isdir(lessonDir)
-		mkdir(lessonDir)
-	end
-	lessons = visit_folder(lessonDir)
-	return lessons
+	packages = visit_folder(storeDir)
+	return filter(x -> isa(x, filterType), map(load_packaged, packages))
 end
 
 """
