@@ -42,15 +42,14 @@ function juliet()
 	println("""
 	Welcome to Juliet, the Julia Interative Educational Tutor.
 	Selct a lesson or course to get started, or type `!help` for information.""")
-	choose_lesson()
+	choose_lesson(get_lessons(), get_courses())
 end
 
 """
 Choose a lesson and complete it
 """
-function choose_lesson()
-	lessons, courses = get_lessons(), get_courses()
-	total = union(lessons, courses)
+function choose_lesson(lessons, courses)
+	total = [courses; lessons]
 	if length(total) == 0
 		println("No lessons or courses installed - exiting Juliet")
 		return
@@ -59,13 +58,13 @@ function choose_lesson()
 	if length(courses) > 0
 		println("Courses:")
 		for (i, course) in enumerate(map(remove_location, courses))
-			println("$(rpad(i, length(string(length(courses))))) - $course")
+			println(rpad(i, length(string(length(courses)))), " - ", course)
 		end
 	end
 	if length(lessons) > 0
 		println("Lessons:")
 		for (i, lesson) in enumerate(map(remove_location, lessons))
-			println("$(rpad(i + length(courses), length(string(length(lessons))))) - $lesson")
+			println(rpad(i + length(courses), length(string(length(lessons)))), " - ", lesson)
 		end
 	end
 
@@ -77,9 +76,10 @@ function choose_lesson()
 	end
 	selection = total[parse(Int, input)]
 	if in(selection, lessons)
-		complete_lesson(load_lesson(selection))
+		complete_lesson(load_packaged(selection))
 	else
-
+		@show load_packaged(selection)
+		choose_lesson(load_packaged(selection).lessons, [])
 	end
 end
 
@@ -87,6 +87,9 @@ end
 Remove the store location from a filename
 """
 function remove_location(filename)
+	if !isa(filename, AbstractString)
+		return filename
+	end
 	return replace(filename, storeDir, "")
 end
 
@@ -106,9 +109,24 @@ function add_question!(lesson::Types.Lesson, question::Types.AbstractQuestion)
 end
 
 """
-Load a lesson from a JLD file
+Create a new course
 """
-function load_lesson(filename)
+function new_course(name; description="", version=v"1", authors=[],
+	keywords=[], lessons=[])
+	return Types.Course(name, description, version, authors, keywords, lessons)
+end
+
+"""
+Add a question to a lesson
+"""
+function add_lesson!(course::Types.Course, lesson::Types.Lesson)
+	push!(course.lessons, lesson)
+end
+
+"""
+Load from a JLD file
+"""
+function load_packaged(filename)
 	return last(first(JLD.load(filename)))
 end
 
@@ -236,7 +254,7 @@ function visit_folder(folder)
 	filenames = Array{AbstractString, 1}()
 	for object in readdir(folder)
 		object = "$folder/$object"
-		if isfile(object) && ismatch(r".*\.julietlesson", object)
+		if isfile(object) && ismatch(r".*\.juliet(lesson|course)", object)
 			push!(filenames, object)
 		elseif isdir(object)
 			append!(filenames, visit_folder(object * "/"))
