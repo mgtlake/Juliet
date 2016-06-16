@@ -4,6 +4,8 @@ Windows build: [![Build status](https://ci.appveyor.com/api/projects/status/qrna
 
 Unix build: [![Build status](https://travis-ci.org/matthew-lake/Juliet.svg?branch=master)](https://travis-ci.org/matthew-lake/Juliet)
 
+Kind-of-dodgy coverage stats: [![Coverage Status](https://coveralls.io/repos/github/matthew-lake/Juliet/badge.svg?branch=master)](https://coveralls.io/github/matthew-lake/Juliet?branch=master)
+
 
 Juliet is a interactive tutor for Julia that provides a simple yet powerful tutorial framework.
 It is currently a Google Summer of Code project for the Julia Language.
