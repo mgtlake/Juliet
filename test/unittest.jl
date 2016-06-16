@@ -1,4 +1,4 @@
 using Juliet
 using Base.Test
 
-@test @tryprogress(:(1+1))
+@test Juliet.@tryprogress(:(1+1)) == :(1+1)
