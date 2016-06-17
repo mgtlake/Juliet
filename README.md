@@ -2,7 +2,7 @@
 
 Windows build: [![Build status](https://ci.appveyor.com/api/projects/status/qrnaiu4tix9g0ot8?svg=true)](https://ci.appveyor.com/project/matthew-lake/juliet)
 
-Unix build: [![Build status](https://travis-ci.org/matthew-lake/Juliet.svg?branch=master)](https://travis-ci.org/matthew-lake/Juliet)
+Unix build: [![Build Status](https://travis-ci.org/matthew-lake/Juliet.svg?branch=master)](https://travis-ci.org/matthew-lake/Juliet)
 
 Kind-of-dodgy coverage stats: [![Coverage Status](https://coveralls.io/repos/github/matthew-lake/Juliet/badge.svg?branch=master)](https://coveralls.io/github/matthew-lake/Juliet?branch=master)
 
