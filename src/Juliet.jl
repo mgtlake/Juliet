@@ -4,6 +4,7 @@ using JLD
 using FileIO
 
 include("types.jl")
+include("convert.jl")
 
 export juliet
 
