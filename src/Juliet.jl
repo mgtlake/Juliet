@@ -61,8 +61,7 @@ function choose_lesson(lessons, courses; currCourse=nothing)
 	if length(courses) > 0
 		println("Courses:")
 		for (i, course) in enumerate(courses)
-			println(rpad(i, length(string(length(courses)))), " - ",
-				course.name)
+			println(rpad(i, length(string(length(courses)))), " - ",	course.name)
 		end
 	end
 	if length(lessons) > 0
