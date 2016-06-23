@@ -2,6 +2,7 @@ module Juliet
 
 using JLD
 using FileIO
+using TOML
 
 include("types.jl")
 include("convert.jl")
@@ -35,6 +36,14 @@ macro getInput()
 	end
 end
 
+macro print(ex...)
+	if isdefined(Main, :Atom)
+		return :(println($(ex...)))
+	else
+		return :(println($(ex...)))
+	end
+end
+
 storeDir = "$(Pkg.dir("Juliet"))/store"
 
 """
@@ -45,6 +54,7 @@ function juliet()
 	Welcome to Juliet, the Julia Interative Educational Tutor.
 	Selct a lesson or course to get started, or type `!help` for information.
 	""")
+	# @show get_packaged(Types.Lesson)
 	choose_lesson(get_packaged(Types.Lesson), get_packaged(Types.Course))
 end
 
@@ -72,15 +82,16 @@ function choose_lesson(lessons, courses; currCourse=nothing)
 				" - ", lesson.name)
 		end
 	end
+	flush(STDOUT)
 
 	input = AbstractString{}
 	while (input = @getInput;
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(total)))
 		if strip(input) == "!back" break end
-		println("Invalid selection")
+		@print("Invalid selection")
 	end
-	println()
+	@print()
 
 	if strip(input) == "!back"
 		choose_lesson(get_packaged(Types.Lesson), get_packaged(Types.Course))
@@ -90,10 +101,10 @@ function choose_lesson(lessons, courses; currCourse=nothing)
 	if in(selection, lessons)
 		complete_lesson(selection)
 		if isa(currCourse, Void) && selection != last(total)
-			println("Continue to next lesson in course? y/n")
+			@print("Continue to next lesson in course? y/n")
 			while (input = strip(lowercase(@getInput));
 					!(input in ["yes", "y", "no", "n"]))
-				println("Invalid selection")
+				@print("Invalid selection")
 			end
 			if input in ["yes", "y"]
 				complete_lesson(total[getindex(total, selection) + 1])
@@ -141,6 +152,10 @@ function load_packaged(filename)
 	return last(first(JLD.load(filename)))
 end
 
+function package_TOML(filename)
+	package_lesson(Convert.to_lesson(TOML.parse(readall(filename))))
+end
+
 """
 Package a lesson into the default location
 """
@@ -173,11 +188,12 @@ end
 Go through a lesson's questions
 """
 function complete_lesson(lesson::Types.Lesson)
-	println("Starting ", lesson.name)
+	@print("Starting ", lesson.name)
 	len = length(lesson.questions)
 	@tryprogress for (i, question) in enumerate(lesson.questions)
 		print("$(rpad(i, length(string(len)))) / $len: ")
-		println(question.text)
+		@print(question.text)
+		flush(STDOUT)
 
 		currHint = 0
 		if isa(question, Types.InfoQuestion)
@@ -187,18 +203,26 @@ function complete_lesson(lesson::Types.Lesson)
 			while (check_question(x -> parse(x) != question.answer))
 				currHint = show_next_hint(currHint, question.hints)
 			end
+			show_congrats()
 		elseif isa(question, Types.FunctionQuestion)
 			while (check_question(x -> !(question.test)(x)))
 				currHint = show_next_hint(currHint, question.hints)
 			end
+			show_congrats()
 		elseif isa(question, Types.MultiQuestion)
-			while (check_question(x -> int(x) != question.answer))
+			@print("Options:")
+			for (i, option) in enumerate(question.options)
+				@print(rpad(i, length(string(length(question.options)))),
+					" - ",	option)
+			end
+			while (check_question(x -> !isa(parse(x), Number) ||
+					parse(Int, x) != question.answer))
 				currHint = show_next_hint(currHint, question.hints)
 			end
+			show_congrats()
 		end
-		show_congrats()
 	end
-	println("Finished ", lesson.name)
+	@print("Finished ", lesson.name)
 end
 
 """
@@ -212,16 +236,16 @@ end
 Show an encouraging message and a hint
 """
 function show_next_hint(index::Int, hints::Array{AbstractString, 1})
-	println(rand([
+	@print(rand([
 		"Oops - that's not quite right",
 		"Almost there - Keep trying!",
 		"One more try",
 		"Hang in there",
 		"Missed it by that much",
 		"Close, but no cigar"]))
-	if length(hints) <= 0 return end
+	if length(hints) <= 0 return 0 end
 	index = index % length(hints) + 1
-	println(hints[index])
+	@print(hints[index])
 	return index
 end
 
@@ -229,7 +253,7 @@ end
 Show a congratulatory message
 """
 function show_congrats()
-	println(rand([
+	@print(rand([
 		"You got it right!",
 		"Great job!",
 		"Keep up the great work!",
@@ -244,6 +268,11 @@ function get_packaged(filterType)
 		mkdir(storeDir)
 	end
 	packages = visit_folder(storeDir)
+	# @show filterType
+	# @show collect(map(load_packaged, packages))[1]
+	# @show typeof(map(load_packaged, packages)[1])
+	# @show isa(map(load_packaged, packages)[1], filterType)
+	# @show filter(x -> isa(x, filterType), map(load_packaged, packages))
 	return filter(x -> isa(x, filterType), map(load_packaged, packages))
 end
 
