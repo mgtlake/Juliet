@@ -197,7 +197,7 @@ function complete_lesson(lesson::Types.Lesson)
 
 		currHint = 0
 		if isa(question, Types.InfoQuestion)
-			print("...")
+			println("...")
 			check_question(x -> true)
 		elseif isa(question, Types.SyntaxQuestion)
 			while (check_question(x -> parse(x) != question.answer))
@@ -229,7 +229,10 @@ end
 Check that the user's input satisfy the question's test
 """
 function check_question(test::Function)
-	return test(@getInput)
+	input = @getInput
+	if strip(input) == "!skip" return false end
+	if strip(input) == "!quit" return false end
+	return test(input)
 end
 
 """
