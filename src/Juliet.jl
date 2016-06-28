@@ -1,8 +1,6 @@
 module Juliet
 
-using JLD
-using FileIO
-using TOML
+using FiniteStateMachine
 
 include("types.jl")
 include("convert.jl")
@@ -120,6 +118,34 @@ end
 Go through a lesson's questions
 """
 function complete_lesson(lesson::Types.Lesson)
+	fsm = state_machine({
+		"initial" => "continuing",
+		"final" => "done",
+		"events" => [{
+				"name" => "ask",
+				"from" => "continuing",
+				"to" => "asking"
+			}, {
+				"name" => "next",
+				"from" => ["asking", "hinting"],
+				"to" => "continuing"
+			}, {
+				"name" => "reject",
+				"from" => ["asking", "hinting"],
+				"to" => "hinting"
+			}, {
+				"name" => "quit",
+				"from" => ["continuing", "asking", "hinting"],
+				"to" => "done"
+			}
+		],
+		"callbacks" => {
+			"onenterasking" => (fsm::StateMachine, args...) -> println(question),
+			"onenterhinting" => (fsm::StateMachine, args...) -> println("hint"),
+			"onbeforenext" => (fsm::StateMachine, args...) -> show_congrats()
+		}
+	})
+
 	@print("Starting ", lesson.name)
 	len = length(lesson.questions)
 	@tryprogress for (i, question) in enumerate(lesson.questions)
