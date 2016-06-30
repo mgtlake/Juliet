@@ -187,6 +187,10 @@ function complete_lesson(lesson::Types.Lesson)
 				fire(fsm, "quit")
 				break
 			end
+			if strip(input) == "!help"
+				show_help()
+				continue
+			end
 			if condition(input)
 				fire(fsm, "next")
 				if !isinfo show_congrats() end
@@ -200,6 +204,16 @@ function complete_lesson(lesson::Types.Lesson)
 		if fsm.current == "done" break end
 	end
 	@print("Finished ", lesson.name)
+end
+
+function show_help()
+	@print("""
+	HELP:
+		`...`   -> press [Enter] to continue
+		[Enter] -> submit answer
+		`!skip` -> go to next question
+		`!quit` -> exit Juliet
+	""")
 end
 
 """
