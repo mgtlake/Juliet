@@ -1,6 +1,7 @@
 module Juliet
 
 using FiniteStateMachine
+using Match
 
 include("types.jl")
 include("convert.jl")
@@ -32,6 +33,14 @@ macro getInput()
 		return :(Main.Atom.input())
 	else
 		return :(print("> "); readline())
+	end
+end
+
+macro getInputDots()
+	if isdefined(Main, :Atom)
+		return :(print("..."); Main.Atom.input())
+	else
+		return :(print("..."); readline())
 	end
 end
 
@@ -114,71 +123,104 @@ function choose_lesson(lessons, courses; currCourse=nothing)
 	end
 end
 
+function print_question(question, index, len)
+	print("$(rpad(index, length(string(len)))) / $len: ")
+	@print(question.text)
+	flush(STDOUT)
+end
+
 """
 Go through a lesson's questions
 """
 function complete_lesson(lesson::Types.Lesson)
-	fsm = state_machine({
+	fsm = state_machine(Dict(
 		"initial" => "continuing",
 		"final" => "done",
-		"events" => [{
+		"events" => [Dict(
 				"name" => "ask",
 				"from" => "continuing",
 				"to" => "asking"
-			}, {
+			), Dict(
 				"name" => "next",
 				"from" => ["asking", "hinting"],
 				"to" => "continuing"
-			}, {
+			), Dict(
 				"name" => "reject",
 				"from" => ["asking", "hinting"],
 				"to" => "hinting"
-			}, {
+			), Dict(
 				"name" => "quit",
 				"from" => ["continuing", "asking", "hinting"],
 				"to" => "done"
-			}
-		],
-		"callbacks" => {
-			"onenterasking" => (fsm::StateMachine, args...) -> println(question),
-			"onenterhinting" => (fsm::StateMachine, args...) -> println("hint"),
-			"onbeforenext" => (fsm::StateMachine, args...) -> show_congrats()
-		}
-	})
+			)
+		]
+	))
 
 	@print("Starting ", lesson.name)
-	len = length(lesson.questions)
 	@tryprogress for (i, question) in enumerate(lesson.questions)
-		print("$(rpad(i, length(string(len)))) / $len: ")
-		@print(question.text)
-		flush(STDOUT)
+		fire(fsm, "ask")
+		print_question(question, i, length(lesson.questions))
 
 		currHint = 0
-		if isa(question, Types.InfoQuestion)
-			println("...")
-			check_question(x -> true)
-		elseif isa(question, Types.SyntaxQuestion)
-			while (check_question(x -> parse(x) != question.answer))
-				currHint = show_next_hint(currHint, question.hints)
-			end
-			show_congrats()
-		elseif isa(question, Types.FunctionQuestion)
-			while (check_question(x -> !(question.test)(x)))
-				currHint = show_next_hint(currHint, question.hints)
-			end
-			show_congrats()
-		elseif isa(question, Types.MultiQuestion)
-			@print("Options:")
-			for (i, option) in enumerate(question.options)
-				@print(rpad(i, length(string(length(question.options)))),
-					" - ",	option)
-			end
-			while (check_question(x -> !isa(parse(x), Number) ||
-					parse(Int, x) != question.answer))
-				currHint = show_next_hint(currHint, question.hints)
-			end
-			show_congrats()
+		isinfo = isa(question, Types.InfoQuestion)
+		condition = @match question begin
+			info::Types.InfoQuestion => x -> true
+			syntax::Types.SyntaxQuestion => x -> parse(x) == question.answer
+			fun::Types.FunctionQuestion => x -> (question.test)(x)
+			multi::Types.MultiQuestion => begin
+					@print("Options:")
+					for (i, option) in enumerate(question.options)
+						@print(rpad(i, length(string(length(question.options)))),
+							" - ", option)
+					end
+					x -> isa(parse(x), Number) && parse(Int, x) == question.answer
+				end
 		end
+
+		while true
+			input = if isinfo @getInputDots else @getInput end
+			if strip(input) == "!skip"
+				fire(fsm, "next")
+				break
+			end
+			if strip(input) == "!quit"
+				fire(fsm, "quit")
+				break
+			end
+			if condition(input)
+				fire(fsm, "next")
+				if !isinfo show_congrats() end
+				break
+			else
+				fire(fsm, "reject")
+				show_hint(question.hints)
+			end
+		end
+
+		if fsm.current == "done" break end
+
+		# if isa(question, Types.InfoQuestion)
+		# 	println("...")
+		# 	check_question(x -> true)
+		# elseif isa(question, Types.SyntaxQuestion)
+		# 	while (check_question(x -> parse(x) != question.answer))
+		# 		currHint = show_next_hint(currHint, question.hints)
+		# 	end
+		# elseif isa(question, Types.FunctionQuestion)
+		# 	while (check_question(x -> !(question.test)(x)))
+		# 		currHint = show_next_hint(currHint, question.hints)
+		# 	end
+		# elseif isa(question, Types.MultiQuestion)
+		# 	@print("Options:")
+		# 	for (i, option) in enumerate(question.options)
+		# 		@print(rpad(i, length(string(length(question.options)))),
+		# 			" - ",	option)
+		# 	end
+		# 	while (check_question(x -> !isa(parse(x), Number) ||
+		# 			parse(Int, x) != question.answer))
+		# 		currHint = show_next_hint(currHint, question.hints)
+		# 	end
+		# end
 	end
 	@print("Finished ", lesson.name)
 end
@@ -196,7 +238,7 @@ end
 """
 Show an encouraging message and a hint
 """
-function show_next_hint(index::Int, hints::Array{AbstractString, 1})
+function show_hint(hints::Array{AbstractString, 1})
 	@print(rand([
 		"Oops - that's not quite right",
 		"Almost there - Keep trying!",
@@ -204,10 +246,9 @@ function show_next_hint(index::Int, hints::Array{AbstractString, 1})
 		"Hang in there",
 		"Missed it by that much",
 		"Close, but no cigar"]))
-	if length(hints) <= 0 return 0 end
-	index = index % length(hints) + 1
-	@print(hints[index])
-	return index
+	if length(hints) > 0
+		@print(rand(hints))
+	end
 end
 
 """
