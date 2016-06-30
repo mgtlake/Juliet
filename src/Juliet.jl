@@ -198,41 +198,8 @@ function complete_lesson(lesson::Types.Lesson)
 		end
 
 		if fsm.current == "done" break end
-
-		# if isa(question, Types.InfoQuestion)
-		# 	println("...")
-		# 	check_question(x -> true)
-		# elseif isa(question, Types.SyntaxQuestion)
-		# 	while (check_question(x -> parse(x) != question.answer))
-		# 		currHint = show_next_hint(currHint, question.hints)
-		# 	end
-		# elseif isa(question, Types.FunctionQuestion)
-		# 	while (check_question(x -> !(question.test)(x)))
-		# 		currHint = show_next_hint(currHint, question.hints)
-		# 	end
-		# elseif isa(question, Types.MultiQuestion)
-		# 	@print("Options:")
-		# 	for (i, option) in enumerate(question.options)
-		# 		@print(rpad(i, length(string(length(question.options)))),
-		# 			" - ",	option)
-		# 	end
-		# 	while (check_question(x -> !isa(parse(x), Number) ||
-		# 			parse(Int, x) != question.answer))
-		# 		currHint = show_next_hint(currHint, question.hints)
-		# 	end
-		# end
 	end
 	@print("Finished ", lesson.name)
-end
-
-"""
-Check that the user's input satisfy the question's test
-"""
-function check_question(test::Function)
-	input = @getInput
-	if strip(input) == "!skip" return false end
-	if strip(input) == "!quit" return false end
-	return test(input)
 end
 
 """
