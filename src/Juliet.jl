@@ -76,21 +76,19 @@ function choose_lesson(lessons, courses; currCourse=nothing)
 		return
 	end
 
-	if length(courses) > 0
-		println("Courses:")
-		for (i, course) in enumerate(courses)
-			println(rpad(i, length(string(length(courses)))), " - ",	course.name)
+	function print_course_or_lesson(list, message; offset=0)
+		if length(list) > 0
+			println(message)
+			for (i, el) in enumerate(list)
+				println(rpad(i + offset, length(string(length(list)))), " - ", el.name)
+			end
 		end
 	end
-	if length(lessons) > 0
-		println("Lessons", isa(currCourse, Void) ? ":" :
-			" in $(currCourse.name) (type `!back` to return to the total list):")
-		for (i, lesson) in enumerate(lessons)
-			println(rpad(i + length(courses), length(string(length(lessons)))),
-				" - ", lesson.name)
-		end
-	end
-	flush(STDOUT)
+
+	print_course_or_lesson(courses, "Courses:")
+	print_course_or_lesson(lessons, "Lessons" * (isa(currCourse, Void) ? ":" :
+		" in $(currCourse.name) (type `!back` to return to the total list):");
+		offset = length(courses))
 
 	input = AbstractString{}
 	while (input = @getInput;
