@@ -110,6 +110,7 @@ function choose_lesson(lessons, courses; currCourse=nothing)
 	while (input = @getInput;
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(total)))
+		if strip(input) == "!quit" return end
 		if strip(input) == "!back" break end
 		if strip(input) == "!help"
 			println(help["select"])
