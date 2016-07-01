@@ -54,6 +54,22 @@ end
 
 storeDir = "$(Pkg.dir("Juliet"))/store"
 
+help = Dict(
+	"select" => """
+	HELP:
+		[Number]   -> select course
+		`!back` -> exit course
+		`!quit` -> exit Juliet
+	""",
+	"lesson" => """
+	HELP:
+		`...`   -> press [Enter] to continue
+		[Enter] -> submit answer
+		`!skip` -> go to next question
+		`!quit` -> exit lesson
+	"""
+)
+
 """
 Main function to run Juliet
 """
@@ -95,6 +111,10 @@ function choose_lesson(lessons, courses; currCourse=nothing)
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(total)))
 		if strip(input) == "!back" break end
+		if strip(input) == "!help"
+			println(help["select"])
+			continue
+		end
 		@print("Invalid selection")
 	end
 	@print()
@@ -186,7 +206,7 @@ function complete_lesson(lesson::Types.Lesson)
 				break
 			end
 			if strip(input) == "!help"
-				show_help()
+				println(help["lesson"])
 				continue
 			end
 			if condition(input)
@@ -202,16 +222,6 @@ function complete_lesson(lesson::Types.Lesson)
 		if fsm.current == "done" break end
 	end
 	@print("Finished ", lesson.name)
-end
-
-function show_help()
-	@print("""
-	HELP:
-		`...`   -> press [Enter] to continue
-		[Enter] -> submit answer
-		`!skip` -> go to next question
-		`!quit` -> exit Juliet
-	""")
 end
 
 """
