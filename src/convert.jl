@@ -5,7 +5,7 @@ using Match
 
 function to_lesson(dict::Dict)
 	dict = lowercase(dict)
-	lesson = Juliet.new_lesson(dict["name"])
+	lesson = Juliet.Util.new_lesson(dict["name"])
 	if "description" in keys(dict) lesson.description = dict["description"] end
 	if "version" in keys(dict)
 		lesson.authors = convert(VersionNumber, dict["version"])
@@ -14,7 +14,7 @@ function to_lesson(dict::Dict)
 	if "keywords" in keys(dict) lesson.keywords = dict["keywords"] end
 
 	for question in dict["questions"]
-		Juliet.add_question!(lesson, match_question(question))
+		Juliet.Util.add_question!(lesson, match_question(question))
 	end
 
 	return lesson

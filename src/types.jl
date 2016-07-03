@@ -27,7 +27,7 @@ immutable FunctionQuestion <: AbstractQuestion
 	text::AbstractString
 	hints::Array{AbstractString, 1}
 	test::AbstractString
-	template:::AbstractString
+	template::AbstractString
 end
 
 immutable MultiQuestion <: AbstractQuestion
