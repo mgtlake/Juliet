@@ -182,11 +182,11 @@ function complete_lesson(lesson::Types.Lesson)
 
 		currHint = 0
 		isinfo = isa(question, Types.InfoQuestion)
-		condition = @match question begin
-			info::Types.InfoQuestion => x -> true
-			syntax::Types.SyntaxQuestion => x -> parse(x) == question.answer
-			fun::Types.FunctionQuestion => x -> (question.test)(x)
-			multi::Types.MultiQuestion =>
+		condition = @match typeof(question) begin
+			Types.InfoQuestion => x -> true
+			Types.SyntaxQuestion => x -> parse(x) == question.answer
+			Types.FunctionQuestion => x -> (question.test)(x)
+			Types.MultiQuestion =>
 				x -> isa(parse(x), Number) && parse(Int, x) == question.answer
 		end
 
