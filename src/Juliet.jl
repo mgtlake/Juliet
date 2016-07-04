@@ -186,14 +186,20 @@ function complete_lesson(lesson::Types.Lesson)
 			info::Types.InfoQuestion => x -> true
 			syntax::Types.SyntaxQuestion => x -> parse(x) == question.answer
 			fun::Types.FunctionQuestion => x -> (question.test)(x)
-			multi::Types.MultiQuestion => begin
-					@print("Options:")
-					for (i, option) in enumerate(question.options)
-						@print(rpad(i, length(string(length(question.options)))),
-							" - ", option)
-					end
-					x -> isa(parse(x), Number) && parse(Int, x) == question.answer
-				end
+			multi::Types.MultiQuestion =>
+				x -> isa(parse(x), Number) && parse(Int, x) == question.answer
+		end
+
+		if isa(question, Types.MultiQuestion)
+			@print("Options:")
+			for (i, option) in enumerate(question.options)
+				@print(rpad(i, length(string(length(question.options)))),
+					" - ", option)
+			end
+			x -> isa(parse(x), Number) && parse(Int, x) == question.answer
+		end
+
+		if isa(question, Types.FunctionQuestion)
 		end
 
 		while true
