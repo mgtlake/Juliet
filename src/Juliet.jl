@@ -185,7 +185,8 @@ function complete_lesson(lesson::Types.Lesson)
 		condition = @match typeof(question) begin
 			Types.InfoQuestion => x -> true
 			Types.SyntaxQuestion => x -> parse(x) == question.answer
-			Types.FunctionQuestion => x -> (question.test)(x)
+			Types.FunctionQuestion =>
+				x -> strip(x) == "!submit" && check(lesson, question)
 			Types.MultiQuestion =>
 				x -> isa(parse(x), Number) && parse(Int, x) == question.answer
 		end
@@ -200,6 +201,7 @@ function complete_lesson(lesson::Types.Lesson)
 		end
 
 		if isa(question, Types.FunctionQuestion)
+			setup_function_file(lesson, question)
 		end
 
 		while true
@@ -283,6 +285,38 @@ function visit_folder(folder)
 		end
 	end
 	return filenames
+end
+
+function setup_function_file(lesson, question::Types.FunctionQuestion)
+	dir = normpath("$(homedir())/Juliet")
+	if !isdir(dir) mkdir(dir) end
+	dir = normpath("$(homedir())/Juliet/$(lesson.name)")
+	if !isdir(dir) mkdir(dir) end
+
+	file = normpath("$dir/$(findin(lesson.questions, [question])[1]).jl")
+	if !isfile(file)
+		open(file, "w") do f
+			write(f, question.template)
+		end
+	end
+
+	@windows_only Util.run(`explorer.exe $file`; whitelist=[1])
+end
+
+function check(lesson, question::Types.FunctionQuestion)
+	dir = normpath("$(homedir())/Juliet/$(lesson.name)")
+	file = normpath("$dir/$(findin(lesson.questions, [question])[1]).jl")
+
+	try
+		# Use readall instead of readlines because it gives an error on failure
+		split(strip(readall(pipeline(`julia $file`))), "\n")
+		return true
+	catch ex
+		if isa(ex, ErrorException)
+			println("There were errors running your code")
+		end
+		return false
+	end
 end
 
 end # module
