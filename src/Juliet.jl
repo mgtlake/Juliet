@@ -310,9 +310,11 @@ function check(lesson, question::Types.FunctionQuestion)
 	file = normpath("$dir/$(findin(lesson.questions, [question])[1]).jl")
 
 	try
+		inputs = [pair[1] for pair in question.tests]
+		expected = [pair[2] for pair in question.tests]
 		# Use readall instead of readlines because it gives an error on failure
-		split(strip(readall(pipeline(`julia $file`))), "\n")
-		return true
+		outputs = split(strip(readall(pipeline(`echo $(join(inputs), "\n")`, `julia $file`))), "\n")
+		return all(pair -> pair[1] == pair[2], zip(outputs, expected))
 	catch ex
 		if isa(ex, ErrorException)
 			println("There were errors running your code")

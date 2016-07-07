@@ -26,7 +26,9 @@ end
 immutable FunctionQuestion <: AbstractQuestion
 	text::AbstractString
 	hints::Array{AbstractString, 1}
-	test::AbstractString
+	# I'd like to use a tuple, but most formats don't support it so I'll
+	# use an array for now
+	tests::Array{Array{AbstractString, 1}, 1}
 	template::AbstractString
 end
 

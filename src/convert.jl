@@ -25,8 +25,8 @@ function match_question(question)
 		"infoquestion" => Juliet.Types.InfoQuestion(question["text"])
 		"syntaxquestion" => Juliet.Types.SyntaxQuestion(question["text"],
 			question["hints"], parse(question["answer"]))
-		"functionquestion" => Juliet.Types.FunctionQuestion(question("text"),
-			question["hints"], question["test"])
+		"functionquestion" => Juliet.Types.FunctionQuestion(question["text"],
+			question["hints"], question["tests"], question["template"])
 		"multiquestion" => Juliet.Types.MultiQuestion(question["text"],
 			question["hints"], question["options"], question["answer"])
 	end
