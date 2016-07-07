@@ -313,8 +313,9 @@ function check(lesson, question::Types.FunctionQuestion)
 		inputs = [pair[1] for pair in question.tests]
 		expected = [pair[2] for pair in question.tests]
 		# Use readall instead of readlines because it gives an error on failure
-		outputs = split(strip(readall(pipeline(`echo $(join(inputs), "\n")`, `julia $file`))), "\n")
-		return all(pair -> pair[1] == pair[2], zip(outputs, expected))
+		outputs = map(x -> readall(pipeline(`echo $x`, `julia $file`)), inputs)
+		same = pair -> strip(pair[1]) == strip(pair[2])
+		return all(same, zip(outputs, expected))
 	catch ex
 		if isa(ex, ErrorException)
 			println("There were errors running your code")
