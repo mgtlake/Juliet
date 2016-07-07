@@ -181,7 +181,7 @@ function complete_lesson(lesson::Types.Lesson)
 		print_question(question, i, length(lesson.questions))
 
 		currHint = 0
-		isinfo = isa(question, Types.InfoQuestion)
+		isinfo, isfunc = isa(question, Types.InfoQuestion), isa(question, Types.FunctionQuestion)
 		condition = @match typeof(question) begin
 			Types.InfoQuestion => x -> true
 			Types.SyntaxQuestion => x -> parse(x) == question.answer
@@ -224,7 +224,7 @@ function complete_lesson(lesson::Types.Lesson)
 				break
 			else
 				fire(fsm, "reject")
-				show_hint(question.hints)
+				show_hint(question.hints; message=!isfunc)
 			end
 		end
 
@@ -236,16 +236,18 @@ end
 """
 Show an encouraging message and a hint
 """
-function show_hint(hints::Array{AbstractString, 1})
-	@print(rand([
-		"Oops - that's not quite right",
-		"Almost there - Keep trying!",
-		"One more try",
-		"Hang in there",
-		"Missed it by that much",
-		"Close, but no cigar"]))
+function show_hint(hints::Array{AbstractString, 1}; message=true)
+	if message
+		@print(rand([
+			"Oops - that's not quite right",
+			"Almost there - Keep trying!",
+			"One more try",
+			"Hang in there",
+			"Missed it by that much",
+			"Close, but no cigar"]))
+	end
 	if length(hints) > 0
-		@print(rand(hints))
+		@print("hint: ", rand(hints))
 	end
 end
 
