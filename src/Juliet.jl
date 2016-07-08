@@ -315,11 +315,10 @@ function check(lesson, question::Types.FunctionQuestion)
 		# Use readall instead of readlines because it gives an error on failure
 		outputs = map(x -> readall(pipeline(`echo $x`, `julia $file`)), inputs)
 		same = pair -> strip(pair[1]) == strip(pair[2])
+		println("$(count(x -> x, map(same, zip(outputs, expected))))/$(length(inputs)) tests passed")
 		return all(same, zip(outputs, expected))
 	catch ex
-		if isa(ex, ErrorException)
-			println("There were errors running your code")
-		end
+		println("There were errors running your code")
 		return false
 	end
 end
