@@ -77,7 +77,8 @@ end
 """
 Choose a lesson and complete it
 """
-function choose_lesson(lessons, courses; currCourse::Types.Course=nothing)
+function choose_lesson(lessons, courses;
+		currCourse::Union{Void, Types.Course}=nothing)
 	total = [courses; lessons]
 	if length(total) == 0
 		println("No lessons or courses installed - exiting Juliet")
