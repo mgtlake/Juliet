@@ -85,7 +85,7 @@ end
 """
 Choose a lesson and complete it
 """
-function choose_lesson(lessons, courses; currCourse=nothing)
+function choose_lesson(lessons, courses; currCourse::Types.Course=nothing)
 	total = [courses; lessons]
 	if length(total) == 0
 		println("No lessons or courses installed - exiting Juliet")
@@ -127,7 +127,7 @@ function choose_lesson(lessons, courses; currCourse=nothing)
 	selection = total[parse(Int, input)]
 	if in(selection, lessons)
 		complete_lesson(selection)
-		if isa(currCourse, Void) && selection != last(total)
+		if !isa(currCourse, Void) && selection != last(total)
 			@print("Continue to next lesson in course? y/n")
 			while (input = strip(lowercase(@getInput));
 					!(input in ["yes", "y", "no", "n"]))
