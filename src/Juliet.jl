@@ -44,14 +44,6 @@ macro getInputDots()
 	end
 end
 
-macro print(ex...)
-	if isdefined(Main, :Atom)
-		return :(println($(ex...)))
-	else
-		return :(println($(ex...)))
-	end
-end
-
 storeDir = "$(Pkg.dir("Juliet"))/store"
 
 help = Dict(
@@ -116,9 +108,8 @@ function choose_lesson(lessons, courses; currCourse::Types.Course=nothing)
 			println(help["select"])
 			continue
 		end
-		@print("Invalid selection")
+		println("Invalid selection")
 	end
-	@print()
 
 	if strip(input) == "!back"
 		choose_lesson(get_packaged(Types.Lesson), get_packaged(Types.Course))
@@ -128,10 +119,10 @@ function choose_lesson(lessons, courses; currCourse::Types.Course=nothing)
 	if in(selection, lessons)
 		complete_lesson(selection)
 		if !isa(currCourse, Void) && selection != last(total)
-			@print("Continue to next lesson in course? y/n")
+			println("Continue to next lesson in course? y/n")
 			while (input = strip(lowercase(@getInput));
 					!(input in ["yes", "y", "no", "n"]))
-				@print("Invalid selection")
+				println("Invalid selection")
 			end
 			if input in ["yes", "y"]
 				complete_lesson(total[getindex(total, selection) + 1])
@@ -144,7 +135,7 @@ end
 
 function print_question(question, index, len)
 	print("$(rpad(index, length(string(len)))) / $len: ")
-	@print(question.text)
+	println(question.text)
 	flush(STDOUT)
 end
 
@@ -175,7 +166,7 @@ function complete_lesson(lesson::Types.Lesson)
 		]
 	))
 
-	@print("Starting ", lesson.name)
+	println("Starting ", lesson.name)
 	@tryprogress for (i, question) in enumerate(lesson.questions)
 		fire(fsm, "ask")
 		print_question(question, i, length(lesson.questions))
@@ -192,9 +183,9 @@ function complete_lesson(lesson::Types.Lesson)
 		end
 
 		if isa(question, Types.MultiQuestion)
-			@print("Options:")
+			println("Options:")
 			for (i, option) in enumerate(question.options)
-				@print(rpad(i, length(string(length(question.options)))),
+				println(rpad(i, length(string(length(question.options)))),
 					" - ", option)
 			end
 			x -> isa(parse(x), Number) && parse(Int, x) == question.answer
@@ -230,7 +221,7 @@ function complete_lesson(lesson::Types.Lesson)
 
 		if fsm.current == "done" break end
 	end
-	@print("Finished ", lesson.name)
+	println("Finished ", lesson.name)
 end
 
 """
@@ -238,7 +229,7 @@ Show an encouraging message and a hint
 """
 function show_hint(hints::Array{AbstractString, 1}; message=true)
 	if message
-		@print(rand([
+		println(rand([
 			"Oops - that's not quite right",
 			"Almost there - Keep trying!",
 			"One more try",
@@ -247,7 +238,7 @@ function show_hint(hints::Array{AbstractString, 1}; message=true)
 			"Close, but no cigar"]))
 	end
 	if length(hints) > 0
-		@print("hint: ", rand(hints))
+		println("hint: ", rand(hints))
 	end
 end
 
@@ -255,7 +246,7 @@ end
 Show a congratulatory message
 """
 function show_congrats()
-	@print(rand([
+	println(rand([
 		"You got it right!",
 		"Great job!",
 		"Keep up the great work!",
