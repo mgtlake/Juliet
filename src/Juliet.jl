@@ -295,6 +295,8 @@ function setup_function_file(lesson, question::Types.FunctionQuestion)
 	end
 
 	@windows_only Util.run(`explorer.exe $file`; whitelist=[1])
+	@linux_only run(`xdg-open $file`)
+	@osx_only run(`open $file`) 
 end
 
 function check(lesson, question::Types.FunctionQuestion)
