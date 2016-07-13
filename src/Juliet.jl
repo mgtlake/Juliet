@@ -198,6 +198,8 @@ function complete_lesson(lesson::Types.Lesson)
 
 		while true
 			input = if isinfo @getInputDots else @getInput end
+			# Remove ansii codes
+			input = replace(input, r"\e\[([A-Z]|[0-9])", "")
 			if strip(input) == "!skip"
 				fire(fsm, "next")
 				break
