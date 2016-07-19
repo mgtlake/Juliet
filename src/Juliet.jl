@@ -147,7 +147,7 @@ function complete_lesson(lesson::Types.Lesson)
 		print("$(rpad(i, length(string(length(lesson.questions))))) / $(length(lesson.questions)): ")
 		ask(question)
 
-		while true
+		while fsm.current == "asking" || fsm.current == "hinting"
 			input = getInput(question)
 			if strip(input) == "!skip"
 				fire(fsm, "next")
@@ -164,7 +164,6 @@ function complete_lesson(lesson::Types.Lesson)
 			if validate(question, input)
 				fire(fsm, "next")
 				show_congrats(question)
-				break
 			else
 				fire(fsm, "reject")
 				show_hint(question)
