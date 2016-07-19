@@ -148,7 +148,7 @@ function complete_lesson(lesson::Types.Lesson)
 		ask(question)
 
 		while fsm.current == "asking" || fsm.current == "hinting"
-			input = getInput(question)
+			input = get_input(question)
 			if strip(input) == "!skip"
 				fire(fsm, "next")
 				break
@@ -175,14 +175,14 @@ function complete_lesson(lesson::Types.Lesson)
 	println("Finished ", lesson.name)
 end
 
-function getInput(question)
+function get_input(question)
 	print("> ")
 	input = @getInput
 	# Remove ansii codes
 	return replace(input, r"\e\[([A-Z]|[0-9])", "")
 end
 
-function getInput(question::Types.InfoQuestion)
+function get_input(question::Types.InfoQuestion)
 	print("...")
 	input = @getInput
 	# Remove ansii codes

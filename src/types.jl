@@ -30,6 +30,8 @@ immutable FunctionQuestion <: AbstractQuestion
 	# use an array for now
 	tests::Array{Array{AbstractString, 1}, 1}
 	template::AbstractString
+	#lessonName::AbstractString
+	#index::Int
 end
 
 immutable MultiQuestion <: AbstractQuestion
