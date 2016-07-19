@@ -32,15 +32,7 @@ macro getInput()
 	if isdefined(Main, :Atom)
 		return :(Main.Atom.input())
 	else
-		return :(print("> "); readline())
-	end
-end
-
-macro getInputDots()
-	if isdefined(Main, :Atom)
-		return :(print("..."); Main.Atom.input())
-	else
-		return :(print("..."); readline())
+		return :(readline())
 	end
 end
 
@@ -100,7 +92,7 @@ function choose_lesson(lessons, courses;
 		offset = length(courses))
 
 	input = AbstractString{}
-	while (input = @getInput;
+	while (print("> "); input = @getInput;
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(total)))
 		if strip(input) == "!quit" return end
@@ -134,12 +126,6 @@ function choose_lesson(lessons, courses;
 	end
 end
 
-function print_question(question, index, len)
-	print("$(rpad(index, length(string(len)))) / $len: ")
-	println(question.text)
-	flush(STDOUT)
-end
-
 """
 Go through a lesson's questions
 """
@@ -147,59 +133,22 @@ function complete_lesson(lesson::Types.Lesson)
 	fsm = state_machine(Dict(
 		"initial" => "continuing",
 		"final" => "done",
-		"events" => [Dict(
-				"name" => "ask",
-				"from" => "continuing",
-				"to" => "asking"
-			), Dict(
-				"name" => "next",
-				"from" => ["asking", "hinting"],
-				"to" => "continuing"
-			), Dict(
-				"name" => "reject",
-				"from" => ["asking", "hinting"],
-				"to" => "hinting"
-			), Dict(
-				"name" => "quit",
-				"from" => ["continuing", "asking", "hinting"],
-				"to" => "done"
-			)
+		"events" => [
+			Dict("name" => "ask", "from" => "continuing", "to" => "asking"),
+			Dict("name" => "next", "from" => ["asking", "hinting"], "to" => "continuing"),
+			Dict("name" => "reject", "from" => ["asking", "hinting"], "to" => "hinting"),
+			Dict("name" => "quit", "from" => ["continuing", "asking", "hinting"], "to" => "done")
 		]
 	))
 
 	println("Starting ", lesson.name)
 	@tryprogress for (i, question) in enumerate(lesson.questions)
 		fire(fsm, "ask")
-		print_question(question, i, length(lesson.questions))
-
-		currHint = 0
-		isinfo, isfunc = isa(question, Types.InfoQuestion), isa(question, Types.FunctionQuestion)
-		condition = @match typeof(question) begin
-			Types.InfoQuestion => x -> true
-			Types.SyntaxQuestion => x -> parse(x) == question.answer
-			Types.FunctionQuestion =>
-				x -> strip(x) == "!submit" && check(lesson, question)
-			Types.MultiQuestion =>
-				x -> isa(parse(x), Number) && parse(Int, x) == question.answer
-		end
-
-		if isa(question, Types.MultiQuestion)
-			println("Options:")
-			for (i, option) in enumerate(question.options)
-				println(rpad(i, length(string(length(question.options)))),
-					" - ", option)
-			end
-			x -> isa(parse(x), Number) && parse(Int, x) == question.answer
-		end
-
-		if isa(question, Types.FunctionQuestion)
-			setup_function_file(lesson, question)
-		end
+		print("$(rpad(i, length(string(length(lesson.questions))))) / $(length(lesson.questions)): ")
+		ask(question)
 
 		while true
-			input = if isinfo @getInputDots else @getInput end
-			# Remove ansii codes
-			input = replace(input, r"\e\[([A-Z]|[0-9])", "")
+			input = getInput(question)
 			if strip(input) == "!skip"
 				fire(fsm, "next")
 				break
@@ -212,13 +161,13 @@ function complete_lesson(lesson::Types.Lesson)
 				println(help["lesson"])
 				continue
 			end
-			if condition(input)
+			if validate(question, input)
 				fire(fsm, "next")
-				if !isinfo show_congrats() end
+				show_congrats(question)
 				break
 			else
 				fire(fsm, "reject")
-				show_hint(question.hints; message=!isfunc)
+				show_hint(question)
 			end
 		end
 
@@ -227,34 +176,105 @@ function complete_lesson(lesson::Types.Lesson)
 	println("Finished ", lesson.name)
 end
 
+function getInput(question)
+	print("> ")
+	input = @getInput
+	# Remove ansii codes
+	return replace(input, r"\e\[([A-Z]|[0-9])", "")
+end
+
+function getInput(question::Types.InfoQuestion)
+	print("...")
+	input = @getInput
+	# Remove ansii codes
+	return replace(input, r"\e\[([A-Z]|[0-9])", "")
+end
+
+function ask(question)
+	println(question.text)
+end
+
+function ask(question::Types.MultiQuestion)
+	println(question.text)
+
+	println("Options:")
+	for (i, option) in enumerate(question.options)
+		println(rpad(i, length(string(length(question.options)))),
+			" - ", option)
+	end
+end
+
+function ask(question::Types.FunctionQuestion)
+	println(question.text)
+	setup_function_file(lesson, question)
+end
+
+function validate(question::Types.InfoQuestion, response)
+	return true
+end
+
+function validate(question::Types.SyntaxQuestion, response)
+	return parse(response) == question.answer
+end
+
+function validate(question::Types.FunctionQuestion, response)
+	if strip(response) != "!submit" return false end
+	dir = normpath("$(homedir())/Juliet/$(question.lessonName)")
+	file = normpath("$dir/$(question.index).jl")
+
+	try
+		inputs = [pair[1] for pair in question.tests]
+		expected = [pair[2] for pair in question.tests]
+		# Use readall instead of readlines because it gives an error on failure
+		outputs = map(x -> readall(pipeline(`echo $x`, `julia $file`)), inputs)
+		same = pair -> strip(pair[1]) == strip(pair[2])
+		println("$(count(x -> x, map(same, zip(outputs, expected))))/$(length(inputs)) tests passed")
+		return all(same, zip(outputs, expected))
+	catch ex
+		@show ex
+		println("There were errors running your code")
+		return false
+	end
+end
+
+function validate(question::Types.MultiQuestion, response)
+	return isa(parse(response), Number) && parse(Int, response) == question.answer
+end
+
 """
 Show an encouraging message and a hint
 """
-function show_hint(hints::Array{AbstractString, 1}; message=true)
-	if message
-		println(rand([
-			"Oops - that's not quite right",
-			"Almost there - Keep trying!",
-			"One more try",
-			"Hang in there",
-			"Missed it by that much",
-			"Close, but no cigar"]))
+function show_hint(question)
+	println(rand([
+		"Oops - that's not quite right",
+		"Almost there - Keep trying!",
+		"One more try",
+		"Hang in there",
+		"Missed it by that much",
+		"Close, but no cigar"]))
+	if length(question.hints) > 0
+		println("hint: ", rand(question.hints))
 	end
-	if length(hints) > 0
-		println("hint: ", rand(hints))
+end
+
+function show_hint(question::Types.FunctionQuestion)
+	if length(question.hints) > 0
+		println("hint: ", rand(question.hints))
 	end
 end
 
 """
 Show a congratulatory message
 """
-function show_congrats()
+function show_congrats(question)
 	println(rand([
 		"You got it right!",
 		"Great job!",
 		"Keep up the great work!",
 		"You're doing great!"]))
 end
+
+function show_congrats(question::Types.InfoQuestion) end
 
 """
 Get packaged lessons or courses
@@ -283,13 +303,13 @@ function visit_folder(folder)
 	return filenames
 end
 
-function setup_function_file(lesson, question::Types.FunctionQuestion)
+function setup_function_file(question::Types.FunctionQuestion)
 	dir = normpath("$(homedir())/Juliet")
 	if !isdir(dir) mkdir(dir) end
-	dir = normpath("$(homedir())/Juliet/$(lesson.name)")
+	dir = normpath("$(homedir())/Juliet/$(question.lessonName)")
 	if !isdir(dir) mkdir(dir) end
 
-	file = normpath("$dir/$(findin(lesson.questions, [question])[1]).jl")
+	file = normpath("$dir/$(question.index).jl")
 	if !isfile(file)
 		open(file, "w") do f
 			write(f, question.template)
@@ -298,25 +318,7 @@ function setup_function_file(lesson, question::Types.FunctionQuestion)
 
 	@windows_only Util.run(`explorer.exe $file`; whitelist=[1])
 	@linux_only run(`xdg-open $file`)
-	@osx_only run(`open $file`) 
-end
-
-function check(lesson, question::Types.FunctionQuestion)
-	dir = normpath("$(homedir())/Juliet/$(lesson.name)")
-	file = normpath("$dir/$(findin(lesson.questions, [question])[1]).jl")
-
-	try
-		inputs = [pair[1] for pair in question.tests]
-		expected = [pair[2] for pair in question.tests]
-		# Use readall instead of readlines because it gives an error on failure
-		outputs = map(x -> readall(pipeline(`echo $x`, `julia $file`)), inputs)
-		same = pair -> strip(pair[1]) == strip(pair[2])
-		println("$(count(x -> x, map(same, zip(outputs, expected))))/$(length(inputs)) tests passed")
-		return all(same, zip(outputs, expected))
-	catch ex
-		println("There were errors running your code")
-		return false
-	end
+	@osx_only run(`open $file`)
 end
 
 end # module
