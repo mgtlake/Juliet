@@ -198,8 +198,7 @@ function ask(question::Types.MultiQuestion)
 
 	println("Options:")
 	for (i, option) in enumerate(question.options)
-		println(rpad(i, length(string(length(question.options)))),
-			" - ", option)
+		println(rpad(i, length(string(length(question.options)))), " - ", option)
 	end
 end
 
