@@ -317,7 +317,11 @@ function setup_function_file(question::Types.FunctionQuestion)
 
 	@windows_only Util.run(`explorer.exe $file`; whitelist=[1])
 	@linux_only run(`xdg-open $file`)
-	@osx_only run(`open $file`)
+	@osx_only try
+		run(`open $file`)
+	catch
+		run(`open -a TextEdit $file`)
+	end
 end
 
 end # module
