@@ -1,3 +1,5 @@
+__precompile__()
+
 module Juliet
 
 using FiniteStateMachine
@@ -9,10 +11,12 @@ include("util.jl")
 
 export juliet
 
-println("""
-	Welcome to Juliet, the Julia Interative Educational Tutor.
-	Type `juliet()` to get started
-	""")
+function __init__()
+	println("""
+		Welcome to Juliet, the Julia Interative Educational Tutor.
+		Type `juliet()` to get started
+		""")
+end
 
 """
 Try to use a progess bar - relies on `Atom.jl`
@@ -321,6 +325,17 @@ function setup_function_file(question::Types.FunctionQuestion)
 		run(`open $file`)
 	catch
 		run(`open -a TextEdit $file`)
+	end
+end
+
+function register(m::Module)
+	open("LESSONS", "r+") do f
+		existing = map(strip, readlines(f))
+		eval(:(using $(Symbol(m))))
+		if any(map(x -> isa(eval(x), Types.Lesson), names(m))) && !in(string(m), existing)
+			push!(existing, string(m))
+			write(f, join(existing, "\n"))
+		end
 	end
 end
 
