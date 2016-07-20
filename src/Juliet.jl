@@ -205,6 +205,7 @@ end
 
 function ask(question::Types.FunctionQuestion)
 	println(question.text)
+	println("`!submit` to submit file and run tests")
 	setup_function_file(lesson, question)
 end
 
