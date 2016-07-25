@@ -319,12 +319,16 @@ function setup_function_file(question::Types.FunctionQuestion)
 		end
 	end
 
-	@windows_only Util.run(`explorer.exe $file`; whitelist=[1])
-	@linux_only run(`xdg-open $file`)
-	@osx_only try
-		run(`open $file`)
-	catch
-		run(`open -a TextEdit $file`)
+ 	@static if is_windows()
+		Util.run(`explorer.exe $file`; whitelist=[1])
+  elseif is_linux()
+		run(`xdg-open $file`)
+	elseif is_apple()
+		try
+			run(`open $file`)
+		catch
+			run(`open -a TextEdit $file`)
+		end
 	end
 end
 
