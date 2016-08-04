@@ -77,6 +77,7 @@ Choose a lesson and complete it
 function choose_lesson(courses::Vector{Types.Course})
 	@match courses begin
 		[]  => begin println("No courses installed - import some packages"); return end
+		[_] => begin choose_lesson(courses[1]); return end
 	end
 
 	print_options(courses, "Courses:")
@@ -98,6 +99,7 @@ end
 function choose_lesson(course::Types.Course)
 	@match courses begin
 		[]  => begin println("No lessons in $(course.name) - exiting course"); return end
+		[_] => begin complete_lesson(course.lessons[1]); return end
 	end
 
 	print_options(course.lessons,
