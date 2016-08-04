@@ -40,21 +40,23 @@ macro getInput()
 	end
 end
 
+courses = Vector{Types.Course}()
+
 storeDir = "$(Pkg.dir("Juliet"))/store"
 
 help = Dict(
 	"select" => """
-	HELP:
-		[Number]   -> select course
-		`!back` -> exit course
-		`!quit` -> exit Juliet
+		HELP:
+		  [Number] -> select course
+		  `!back`  -> exit course
+		  `!quit`  -> exit Juliet
 	""",
 	"lesson" => """
-	HELP:
-		`...`   -> press [Enter] to continue
-		[Enter] -> submit answer
-		`!skip` -> go to next question
-		`!quit` -> exit lesson
+		HELP:
+		  `...`   -> press [Enter] to continue
+		  [Enter] -> submit answer
+		  `!skip` -> go to next question
+		  `!quit` -> exit lesson
 	"""
 )
 
@@ -66,67 +68,73 @@ function juliet()
 	Welcome to Juliet, the Julia Interative Educational Tutor.
 	Selct a lesson or course to get started, or type `!help` for information.
 	""")
-	# @show get_packaged(Types.Lesson)
-	choose_lesson(get_packaged(Types.Lesson), get_packaged(Types.Course))
+	choose_lesson(courses)
 end
 
 """
 Choose a lesson and complete it
 """
-function choose_lesson(lessons, courses;
-		currCourse::Union{Void, Types.Course}=nothing)
-	total = [courses; lessons]
-	if length(total) == 0
-		println("No lessons or courses installed - exiting Juliet")
-		return
+function choose_lesson(courses::Vector{Types.Course})
+	@match courses begin
+		[]  => begin println("No courses installed - import some packages"); return end
 	end
 
-	function print_course_or_lesson(list, message; offset=0)
-		if length(list) > 0
-			println(message)
-			for (i, el) in enumerate(list)
-				println(rpad(i + offset, length(string(length(list)))), " - ", el.name)
-			end
-		end
-	end
-
-	print_course_or_lesson(courses, "Courses:")
-	print_course_or_lesson(lessons, "Lessons" * (isa(currCourse, Void) ? ":" :
-		" in $(currCourse.name) (type `!back` to return to the total list):");
-		offset = length(courses))
+	print_options(courses, "Courses:")
 
 	input = AbstractString{}
 	while (print("> "); input = @getInput;
 			!isa(parse(input), Number) ||
-			!(0 < parse(Int, input) <= length(total)))
-		if strip(input) == "!quit" return end
-		if strip(input) == "!back" break end
-		if strip(input) == "!help"
-			println(help["select"])
-			continue
+			!(0 < parse(Int, input) <= length(courses)))
+		@match strip(input) begin
+			"!quit" => return
+			"!help" => println(help["select"])
+			_       => println("Invalid selection")
 		end
-		println("Invalid selection")
 	end
 
-	if strip(input) == "!back"
-		choose_lesson(get_packaged(Types.Lesson), get_packaged(Types.Course))
-		return
+	choose_lesson(courses[parse(Int, input)])
+end
+
+function choose_lesson(course::Types.Course)
+	@match courses begin
+		[]  => begin println("No lessons in $(course.name) - exiting course"); return end
 	end
-	selection = total[parse(Int, input)]
-	if in(selection, lessons)
-		complete_lesson(selection)
-		if !isa(currCourse, Void) && selection != last(total)
-			println("Continue to next lesson in course? y/n")
-			while (input = strip(lowercase(@getInput));
-					!(input in ["yes", "y", "no", "n"]))
-				println("Invalid selection")
-			end
-			if input in ["yes", "y"]
-				complete_lesson(total[getindex(total, selection) + 1])
-			else return end
+
+	print_options(course.lessons,
+		"Lessons in $(course.name) (type `!back` to return to the total list):")
+
+	input = AbstractString{}
+	while (print("> "); input = @getInput;
+			!isa(parse(input), Number) ||
+			!(0 < parse(Int, input) <= length(course.lessons)))
+		@match strip(input) begin
+			"!quit" => return
+			"!back" => begin choose_lesson(courses); return end
+			"!help" => println(help["select"])
+			_       => println("Invalid selection")
 		end
-	else
-		choose_lesson(selection.lessons, []; currCourse=selection)
+	end
+
+	selection = course.lessons[parse(Int, input)]
+	complete_lesson(selection)
+	if selection != last(course.lessons)
+		println("Continue to next lesson in course? y/n")
+		while (input = strip(lowercase(@getInput));
+				!(input in ["yes", "y", "no", "n"]))
+			println("Invalid selection")
+		end
+		if input in ["yes", "y"]
+			complete_lesson(course.lessons[getindex(course.lessons, selection) + 1])
+		else return end
+	end
+end
+
+function print_options(list, message)
+	if length(list) > 0
+		println(message)
+		for (i, el) in enumerate(list)
+			println(rpad(i, length(string(length(list)))), " - ", el.name)
+		end
 	end
 end
 
@@ -153,18 +161,12 @@ function complete_lesson(lesson::Types.Lesson)
 
 		while fsm.current == "asking" || fsm.current == "hinting"
 			input = get_input(question)
-			if strip(input) == "!skip"
-				fire(fsm, "next")
-				break
+			@match strip(input) begin
+				"!skip" => begin fire(fsm, "next"); break end
+				"!quit" => begin fire(fsm, "quit"); break end
+				"!help" => begin println(help["lesson"]); continue end
 			end
-			if strip(input) == "!quit"
-				fire(fsm, "quit")
-				break
-			end
-			if strip(input) == "!help"
-				println(help["lesson"])
-				continue
-			end
+
 			if validate(question, input)
 				fire(fsm, "next")
 				show_congrats(question)
@@ -283,6 +285,12 @@ function show_congrats(question::Types.InfoQuestion) end
 Get packaged lessons or courses
 """
 function get_packaged(filterType)
+	open("LESSONS", "r") do f
+		modules = map(strip, readlines(f))
+		for m in modules
+
+		end
+	end
 	if !isdir(storeDir)
 		mkdir(storeDir)
 	end
@@ -328,14 +336,9 @@ function setup_function_file(question::Types.FunctionQuestion)
 	end
 end
 
-function register(m::Module)
-	open("LESSONS", "r+") do f
-		existing = map(strip, readlines(f))
-		eval(:(using $(Symbol(m))))
-		if any(map(x -> isa(eval(x), Types.Lesson), names(m))) && !in(string(m), existing)
-			push!(existing, string(m))
-			write(f, join(existing, "\n"))
-		end
+function register(course::Types.Course)
+	if !in(course, courses)
+		push!(courses, course)
 	end
 end
 
