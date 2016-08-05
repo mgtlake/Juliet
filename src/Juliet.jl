@@ -4,6 +4,7 @@ module Juliet
 
 using FiniteStateMachine
 using Match
+using Compat
 
 include("types.jl")
 include("convert.jl")
@@ -296,9 +297,9 @@ function setup_function_file(question::Types.FunctionQuestion)
 		end
 	end
 
- 	@static if is_windows()
+ 	@compat @static if is_windows()
 		Util.run(`explorer.exe $file`; whitelist=[1])
-  elseif is_linux()
+	elseif is_linux()
 		run(`xdg-open $file`)
 	elseif is_apple()
 		try
