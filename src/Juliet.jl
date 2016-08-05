@@ -283,39 +283,6 @@ end
 
 function show_congrats(question::Types.InfoQuestion) end
 
-"""
-Get packaged lessons or courses
-"""
-function get_packaged(filterType)
-	open("LESSONS", "r") do f
-		modules = map(strip, readlines(f))
-		for m in modules
-
-		end
-	end
-	if !isdir(storeDir)
-		mkdir(storeDir)
-	end
-	packages = visit_folder(storeDir)
-	return filter(x -> isa(x, filterType), map(Util.load_packaged, packages))
-end
-
-"""
-Check for lessons and courses in a folder - acts recursively
-"""
-function visit_folder(folder)
-	filenames = Array{AbstractString, 1}()
-	for object in readdir(folder)
-		object = "$folder/$object"
-		if isfile(object) && ismatch(r".*\.juliet(lesson|course)", object)
-			push!(filenames, object)
-		elseif isdir(object)
-			append!(filenames, visit_folder(object * "/"))
-		end
-	end
-	return filenames
-end
-
 function setup_function_file(question::Types.FunctionQuestion)
 	dir = normpath("$(homedir())/Juliet")
 	if !isdir(dir) mkdir(dir) end
