@@ -43,8 +43,6 @@ end
 
 courses = Vector{Types.Course}()
 
-storeDir = "$(Pkg.dir("Juliet"))/store"
-
 help = Dict(
 	"select" => """
 		HELP:
