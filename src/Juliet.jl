@@ -285,10 +285,8 @@ end
 function show_congrats(question::Types.InfoQuestion) end
 
 function setup_function_file(question::Types.FunctionQuestion)
-	dir = normpath("$(homedir())/Juliet")
-	if !isdir(dir) mkdir(dir) end
 	dir = normpath("$(homedir())/Juliet/$(question.lessonName)")
-	if !isdir(dir) mkdir(dir) end
+	mkpath(dir)
 
 	file = normpath("$dir/$(question.index).jl")
 	if !isfile(file)
