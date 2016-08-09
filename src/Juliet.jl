@@ -81,7 +81,7 @@ function choose_lesson(courses::Vector{Types.Course})
 
 	print_options(courses, "Courses:")
 
-	input = AbstractString{}
+	input = ""
 	while (print("> "); input = getInput();
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(courses)))
@@ -104,7 +104,7 @@ function choose_lesson(course::Types.Course)
 	print_options(course.lessons,
 		"Lessons in $(course.name) (type `!back` to return to the total list):")
 
-	input = AbstractString{}
+	input = ""
 	while (print("> "); input = getInput();
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(course.lessons)))
