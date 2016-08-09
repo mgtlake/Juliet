@@ -41,7 +41,7 @@ macro getInput()
 	end
 end
 
-courses = Vector{Types.Course}()
+courses = Types.Course[]
 
 help = Dict(
 	"select" => """
