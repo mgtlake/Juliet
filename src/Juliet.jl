@@ -192,7 +192,7 @@ function get_input(question)
 end
 
 function get_input(question::Types.InfoQuestion)
-	print("...")
+	print("[Press Enter to continue]")
 	input = @getInput
 	# Remove ansii codes
 	return replace(input, r"\e\[([A-Z]|[0-9])", "")
