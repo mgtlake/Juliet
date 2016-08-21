@@ -17,6 +17,8 @@ function __init__()
 		Welcome to Juliet, the Julia Interative Educational Tutor.
 		Type `juliet()` to get started
 		""")
+	# Seed the rng to make testing deterministic
+	srand(1)
 end
 
 """
@@ -42,8 +44,6 @@ macro getInput()
 end
 
 courses = Vector{Types.Course}()
-
-storeDir = "$(Pkg.dir("Juliet"))/store"
 
 help = Dict(
 	"select" => """
@@ -73,7 +73,7 @@ function juliet()
 end
 
 """
-Choose a lesson and complete it
+Choose a course, and then choose a lesson
 """
 function choose_lesson(courses::Vector{Types.Course})
 	@match courses begin
@@ -97,6 +97,9 @@ function choose_lesson(courses::Vector{Types.Course})
 	choose_lesson(courses[parse(Int, input)])
 end
 
+"""
+Choose a lesson, then complete it
+"""
 function choose_lesson(course::Types.Course)
 	@match courses begin
 		[]  => begin println("No lessons in $(course.name) - exiting course"); return end
@@ -132,6 +135,9 @@ function choose_lesson(course::Types.Course)
 	end
 end
 
+"""
+Print a list of options
+"""
 function print_options(list, message)
 	if length(list) > 0
 		println(message)
@@ -184,6 +190,9 @@ function complete_lesson(lesson::Types.Lesson)
 	println("Finished ", lesson.name)
 end
 
+"""
+Get input for a question
+"""
 function get_input(question)
 	print("> ")
 	input = @getInput
@@ -198,6 +207,9 @@ function get_input(question::Types.InfoQuestion)
 	return replace(input, r"\e\[([A-Z]|[0-9])", "")
 end
 
+"""
+Ask a question
+"""
 function ask(question)
 	println(question.text)
 end
@@ -214,9 +226,12 @@ end
 function ask(question::Types.FunctionQuestion)
 	println(question.text)
 	println("`!submit` to submit file and run tests")
-	setup_function_file(lesson, question)
+	setup_function_file(question)
 end
 
+"""
+Validate an answer to a question
+"""
 function validate(question::Types.InfoQuestion, response)
 	return true
 end
@@ -227,8 +242,8 @@ end
 
 function validate(question::Types.FunctionQuestion, response)
 	if strip(response) != "!submit" return false end
-	dir = normpath("$(homedir())/Juliet/$(question.lessonName)")
-	file = normpath("$dir/$(question.index).jl")
+	dir = joinpath(homedir(), "Juliet", "FunctionQuestion")
+	file = joinpath(dir, filename(question))
 
 	try
 		inputs = [pair[1] for pair in question.tests]
@@ -284,32 +299,48 @@ end
 
 function show_congrats(question::Types.InfoQuestion) end
 
+"""
+Set up the file for a function question
+"""
 function setup_function_file(question::Types.FunctionQuestion)
-	dir = normpath("$(homedir())/Juliet")
-	if !isdir(dir) mkdir(dir) end
-	dir = normpath("$(homedir())/Juliet/$(question.lessonName)")
-	if !isdir(dir) mkdir(dir) end
+	dir = joinpath(homedir(), "Juliet", "FunctionQuestion")
+	mkpath(dir)
 
-	file = normpath("$dir/$(question.index).jl")
+	file = joinpath(dir, filename(question))
 	if !isfile(file)
 		open(file, "w") do f
 			write(f, question.template)
 		end
 	end
 
- 	@compat @static if is_windows()
-		Util.run(`explorer.exe $file`; whitelist=[1])
-	elseif is_linux()
-		run(`xdg-open $file`)
-	elseif is_apple()
-		try
-			run(`open $file`)
-		catch
-			run(`open -a TextEdit $file`)
+	try
+	 	@compat @static if is_windows()
+			Util.run(`explorer.exe $file`; whitelist=[1])
+		elseif is_linux()
+			run(`xdg-open $file`)
+		elseif is_apple()
+			try
+				run(`open $file`)
+			catch
+				run(`open -a TextEdit $file`)
+			end
 		end
+	catch
+		println("Could not open file: please open `$file` manually")
 	end
 end
 
+"""
+Generate a filename for a function question
+"""
+function filename(question::Types.FunctionQuestion)
+	description = x -> x[1:min(25, length(x))]
+	return "$(description(question.text))-$(hash(question)).jl"
+end
+
+"""
+Register a course with the current session of Juliet
+"""
 function register(course::Types.Course)
 	if !in(course, courses)
 		push!(courses, course)

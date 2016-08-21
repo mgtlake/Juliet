@@ -1,0 +1,12 @@
+Welcome to Juliet, the Julia Interative Educational Tutor.
+Type `juliet()` to get started
+
+Welcome to Juliet, the Julia Interative Educational Tutor.
+Selct a lesson or course to get started, or type `!help` for information.
+
+Starting Functions TEST
+1 / 1: Return the same number
+`!submit` to submit file and run tests
+> 1/1 tests passed
+Keep up the great work!
+Finished Functions TEST

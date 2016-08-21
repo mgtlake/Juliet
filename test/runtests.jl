@@ -3,8 +3,19 @@ using Base.Test
 
 include("unittest.jl")
 
-f = x -> strip(x) != ""
-lesson = Juliet.Util.new_lesson("1234")
-Juliet.Util.add_question!(lesson, Juliet.Types.FunctionQuestion("question 1",
-	["hint 1", "hint 2", "hint 3"], f))
-# Juliet.complete_lesson(lesson)
+clean = x -> replace(x, "\r\n", "\n")
+
+for i in readdir("in")
+	input = joinpath("in", i)
+	script = joinpath("script", "$i.jl")
+	output = joinpath("out", i)
+	try
+		run(pipeline(pipeline(`cat $input`, `julia $script`), stdout="temp"))
+		run(pipeline(pipeline(`type $input`, `julia $script`), stdout="temp"))
+	end
+	open("temp", "r") do f
+		open("$output", "r") do g
+			@test clean(readall(f)) == clean(readall(g))
+		end
+	end
+end

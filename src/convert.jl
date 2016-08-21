@@ -3,6 +3,9 @@ module Convert
 using Juliet
 using Match
 
+"""
+Convert a suitable dictionary to a leson
+"""
 function to_lesson(dict::Dict)
 	dict = lowercase(dict)
 	lesson = Juliet.Util.new_lesson(dict["name"])
@@ -20,6 +23,9 @@ function to_lesson(dict::Dict)
 	return lesson
 end
 
+"""
+Convert a dictionary structure into a question based on `type` field
+"""
 function match_question(question)
 	@match Base.lowercase(question["type"]) begin
 		"infoquestion" => Juliet.Types.InfoQuestion(question["text"])
@@ -32,6 +38,9 @@ function match_question(question)
 	end
 end
 
+"""
+Convert all dictionary keys to lowercase
+"""
 function lowercase(dict::Dict)
 	newdict = Dict{AbstractString, Any}()
 	for pair in dict

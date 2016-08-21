@@ -1,0 +1,18 @@
+Welcome to Juliet, the Julia Interative Educational Tutor.
+Type `juliet()` to get started
+
+Welcome to Juliet, the Julia Interative Educational Tutor.
+Selct a lesson or course to get started, or type `!help` for information.
+
+Starting Basic syntax
+1 / 4: This lesson will teach you about basic Julia syntax
+...2 / 4: Set `a` to be 1
+> Keep up the great work!
+3 / 4: Assign `b` to be twice `a`
+> Keep up the great work!
+4 / 4: Is this fun?
+Options:
+1 - no
+2 - yes
+> You're doing great!
+Finished Basic syntax
