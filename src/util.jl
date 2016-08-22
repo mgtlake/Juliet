@@ -1,7 +1,6 @@
 module Util
 
 using Juliet
-using FileIO
 using TOML
 
 """
