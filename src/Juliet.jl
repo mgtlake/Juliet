@@ -35,15 +35,15 @@ end
 """
 Get user input in a environment agnostic manner
 """
-macro getInput()
+function getInput()
 	if isdefined(Main, :Atom)
-		return :(Main.Atom.input())
+		return Main.Atom.input()
 	else
-		return :(readline())
+		return readline()
 	end
 end
 
-courses = Vector{Types.Course}()
+courses = Types.Course[]
 
 help = Dict(
 	"select" => """
@@ -83,8 +83,8 @@ function choose_lesson(courses::Vector{Types.Course})
 
 	print_options(courses, "Courses:")
 
-	input = AbstractString{}
-	while (print("> "); input = @getInput;
+	input = ""
+	while (print("> "); input = getInput();
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(courses)))
 		@match strip(input) begin
@@ -109,8 +109,8 @@ function choose_lesson(course::Types.Course)
 	print_options(course.lessons,
 		"Lessons in $(course.name) (type `!back` to return to the total list):")
 
-	input = AbstractString{}
-	while (print("> "); input = @getInput;
+	input = ""
+	while (print("> "); input = getInput();
 			!isa(parse(input), Number) ||
 			!(0 < parse(Int, input) <= length(course.lessons)))
 		@match strip(input) begin
@@ -125,7 +125,7 @@ function choose_lesson(course::Types.Course)
 	complete_lesson(selection)
 	if selection != last(course.lessons)
 		println("Continue to next lesson in course? y/n")
-		while (input = strip(lowercase(@getInput));
+		while (input = strip(lowercase(getInput()));
 				!(input in ["yes", "y", "no", "n"]))
 			println("Invalid selection")
 		end
@@ -195,14 +195,14 @@ Get input for a question
 """
 function get_input(question)
 	print("> ")
-	input = @getInput
+	input = getInput()
 	# Remove ansii codes
 	return replace(input, r"\e\[([A-Z]|[0-9])", "")
 end
 
 function get_input(question::Types.InfoQuestion)
-	print("...")
-	input = @getInput
+	print("[Press Enter to continue]")
+	input = getInput()
 	# Remove ansii codes
 	return replace(input, r"\e\[([A-Z]|[0-9])", "")
 end
