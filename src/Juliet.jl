@@ -326,7 +326,7 @@ function setup_function_file(question::Types.FunctionQuestion)
 			end
 		end
 	catch
-		println("Could not open file: please open `$file` manually")
+		println(STDERR, "Could not open file: please open `$file` manually")
 	end
 end
 
