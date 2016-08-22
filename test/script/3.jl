@@ -23,6 +23,7 @@ answer = """
 print(readline())
 """
 dir = joinpath(homedir(), "Juliet", "FunctionQuestion")
+mkpath(dir)
 file = joinpath(dir, Juliet.filename(lesson.questions[1]))
 open(file, "w") do f
 	write(f, answer)
