@@ -14,6 +14,18 @@ Though development is at an early stage, please feel free to give feedback or ad
 
 All code is released under the MIT license.
 
+## How to use
+
+Juliet is only a framework, and uses seperate course packages. An example is provided at [BasicSyntaxLesson](https://github.com/matthew-lake/BasicSyntaxLesson).
+
+To use, simply import the package:
+```
+using BasicSyntaxLesson
+```
+and start Juliet:
+```
+juliet()
+```
 
 ## Julia 0.5 Compatibility Issues
 
